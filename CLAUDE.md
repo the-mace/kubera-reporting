@@ -210,31 +210,41 @@ Use `scratch/` for temporary test scripts - it's excluded from git. Write test f
 
 **CRITICAL**: Always run ALL quality checks before committing. GitHub Actions will fail if any of these fail.
 
-1. **Run quality checks individually** (do NOT skip any of these):
+1. **FIRST: Auto-fix linting and formatting** (do this BEFORE checking):
    ```bash
-   # Check linting
+   # Fix any auto-fixable linting issues (import sorting, etc.)
+   ruff check --fix .
+
+   # Format all code
+   ruff format .
+   ```
+
+2. **THEN: Run verification checks** (do NOT skip any of these):
+   ```bash
+   # Verify linting (should pass after step 1)
    ruff check .
 
-   # Check formatting
-   ruff format --check .
-
-   # Check type annotations - THIS IS CRITICAL!
+   # Verify type annotations - THIS IS CRITICAL!
    mypy kubera_reporting
 
-   # Run tests
+   # Run all tests
    pytest
    ```
 
-2. **Or run all at once** (stops at first failure):
+3. **Or run all at once** (stops at first failure):
    ```bash
-   ruff check . && ruff format . && mypy kubera_reporting && pytest
+   ruff check --fix . && ruff format . && ruff check . && mypy kubera_reporting && pytest
    ```
 
-3. If you modified report formats, regenerate samples: `kubera-report regenerate-samples`
+4. If you modified report formats, regenerate samples: `kubera-report regenerate-samples`
 
-4. Include CLAUDE.md changes in the commit if you updated it
+5. Include CLAUDE.md changes in the commit if you updated it
 
-**Note**: The mypy check is particularly important as it validates type correctness for Python 3.10+ compatibility. Many type errors won't show up in tests but will fail in CI.
+**Important Notes**:
+- Always run `ruff check --fix` and `ruff format` BEFORE checking - they may modify files
+- The mypy check validates type correctness for Python 3.10+ compatibility
+- Many type errors won't show up in tests but will fail in CI
+- Import sorting errors (I001) require `ruff check --fix` to auto-fix
 
 ### API Rate Limits
 **IMPORTANT**: Only fetch from Kubera API once per day!
