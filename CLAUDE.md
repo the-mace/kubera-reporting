@@ -66,8 +66,14 @@ kubera-report list-snapshots
 # AI query (uses API)
 kubera-report query "What's my largest asset?"
 
-# Regenerate sample reports
+# Regenerate sample reports (saves to sample_reports/)
 kubera-report regenerate-samples
+
+# Send sample report via email (uses test fixtures, no API call)
+kubera-report send-sample
+
+# Send to specific email
+kubera-report send-sample --email user@example.com --name "John Doe"
 ```
 
 ## Architecture

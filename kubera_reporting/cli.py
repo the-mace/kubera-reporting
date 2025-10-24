@@ -533,5 +533,98 @@ risk profile."""
         sys.exit(1)
 
 
+@cli.command()
+@click.option(
+    "--email",
+    help="Email address to send to (uses KUBERA_REPORT_EMAIL env if not set)",
+)
+@click.option(
+    "--name",
+    help="Recipient name for personalization (uses KUBERA_REPORT_NAME env if not set)",
+)
+def send_sample(email: str | None, name: str | None) -> None:
+    """Send sample report with deltas via email."""
+    import json
+    import os
+
+    try:
+        # Get email from env if not provided
+        if not email:
+            email = os.environ.get("KUBERA_REPORT_EMAIL")
+            if not email:
+                console.print(
+                    "[red]Error:[/red] Email not provided. "
+                    "Use --email or set KUBERA_REPORT_EMAIL environment variable."
+                )
+                sys.exit(1)
+
+        # Get recipient name from env if not provided
+        if not name:
+            name = os.environ.get("KUBERA_REPORT_NAME")
+
+        console.print(f"[bold]Sending sample report to {email}...[/bold]\n")
+
+        # Load fixtures
+        fixtures_dir = Path(__file__).parent.parent / "tests" / "fixtures"
+
+        with open(fixtures_dir / "snapshot_2025-01-15.json") as f:
+            snapshot_day1 = json.load(f)
+
+        with open(fixtures_dir / "snapshot_2025-01-16.json") as f:
+            snapshot_day2 = json.load(f)
+
+        console.print("[green]✓[/green] Loaded test fixtures")
+
+        # Generate report with deltas
+        reporter = PortfolioReporter()
+        report_data = reporter.calculate_deltas(snapshot_day2, snapshot_day1)
+
+        # Generate allocation chart as bytes (not embedded)
+        allocation = reporter.calculate_asset_allocation(snapshot_day2)
+        chart_bytes = reporter.generate_allocation_chart(allocation)
+        console.print("[green]✓[/green] Generated allocation chart")
+
+        # AI summary (same as regenerate_samples)
+        ai_summary = (
+            "The net worth rose $6,205 (0.46%) today, primarily driven by gains in the "
+            "Retirement Account - 401k - 9999 (+$2,400, 1.19%) and Investment Account - Stocks - "
+            "1234 (+$1,575, 1.43%), alongside cash inflows to the Checking Account (+$500, 3.33%) "
+            "and minor debt reductions on the Mortgage - Primary Residence (-$50) and Auto Loan - "
+            "Vehicle 1 (-$30), which offset a sharp $3,125 (12.5%) decline in the Crypto Wallet. "
+            "This movement underscores the portfolio's heavy 60.42% real estate concentration, "
+            "which remained flat at zero change, amplifying the relative impact of volatility in "
+            "the smaller 22.39% stocks and 1.55% crypto allocations and exposing concentration "
+            "risks in illiquid assets amid diversified daily swings. Watch the stark divergence in "
+            "crypto's outsized drop versus steady equity and cash gains, signaling potential "
+            "broader market rotation away from high-risk assets. Review the Crypto Wallet position "
+            "immediately to assess underlying causes like price volatility or transaction errors, "
+            "considering a tactical reduction if it persists."
+        )
+
+        # Generate HTML report (without embedded chart, since we'll attach it separately)
+        html_content = reporter.generate_html_report(
+            report_data,
+            ai_summary=ai_summary,
+            recipient_name=name or "Investor",
+            embed_chart_data=False,  # Don't embed - we'll attach separately for email
+        )
+        console.print("[green]✓[/green] Generated HTML report")
+
+        # Send email
+        emailer = EmailSender(recipient=email)
+        emailer.send_html_email(
+            subject="Sample Kubera Portfolio Report (Daily)",
+            html_content=html_content,
+            chart_image=chart_bytes,
+        )
+
+        console.print(f"\n[bold green]✓ Email sent successfully to {email}![/bold green]")
+        console.print("[dim]This is synthetic test data from fixtures[/dim]")
+
+    except Exception as e:
+        console.print(f"[red]Unexpected error:[/red] {e}")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
     cli()
