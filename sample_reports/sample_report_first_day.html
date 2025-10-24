@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+               margin: 0; padding: 20px; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white;
+                     border-radius: 8px; padding: 30px; }
+        h1 { color: #333; font-size: 24px; margin-bottom: 10px; }
+        .subtitle { color: #666; font-size: 14px; margin-bottom: 30px; }
+        .net-worth { background-color: #f8f9fa; padding: 20px; border-radius: 8px;
+                      margin-bottom: 30px; }
+        .net-worth-value { font-size: 32px; font-weight: bold; color: #333; }
+        .net-worth-change { font-size: 18px; font-weight: 600; margin-top: 5px; }
+        .section { margin-bottom: 30px; }
+        .section-title { font-size: 18px; font-weight: 600; color: #333;
+                         margin-bottom: 15px; border-bottom: 2px solid #e0e0e0;
+                         padding-bottom: 10px; display: flex; justify-content: space-between;
+                         align-items: center; }
+        .account { display: flex; justify-content: space-between; align-items: center;
+                   padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .account-name { font-weight: 500; color: #333; }
+        .account-institution { font-size: 12px; color: #999; }
+        .account-value { text-align: right; }
+        .account-balance { font-weight: 600; color: #333; }
+        .account-change { font-size: 14px; font-weight: 600; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;
+                  color: #999; font-size: 12px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Portfolio Report</h1>
+        
+        <div class="subtitle">
+            <strong>Daily Report</strong> - Here's a snapshot of your current
+            account balances.
+        </div>
+        
+
+        
+
+        <div class="net-worth">
+            <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Net worth</div>
+            <div class="net-worth-value">$1,359,205 (Lean FIRE)</div>
+            
+        </div>
+
+        
+        <div class="section">
+            <div class="section-title">
+                <span>Assets</span>
+                <span style="font-size: 16px; font-weight: 600;">
+                    Total: $1,799,125
+                    
+                </span>
+            </div>
+
+            
+            <div style="margin-top: 20px;">
+                <div style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                    Real Estate
+                    <span style="font-size: 14px; color: #777; font-weight: 500;">
+                        (1 account)
+                    </span>
+                    <span style="float: right; font-size: 14px;">
+                        $850,000
+                        
+                    </span>
+                </div>
+
+                
+                <div class="account">
+                    <div style="flex: 1;">
+                        <div class="account-name">Primary Residence</div>
+                        
+                    </div>
+                    <div class="account-value">
+                        <div class="account-balance">$850,000</div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <div style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                    Retirement
+                    <span style="font-size: 14px; color: #777; font-weight: 500;">
+                        (1 account)
+                    </span>
+                    <span style="float: right; font-size: 14px;">
+                        $203,400
+                        
+                    </span>
+                </div>
+
+                
+                <div class="account">
+                    <div style="flex: 1;">
+                        <div class="account-name">Retirement Account - 401k - 9999</div>
+                        
+                        <div class="account-institution">Retirement Firm B</div>
+                        
+                    </div>
+                    <div class="account-value">
+                        <div class="account-balance">$203,400</div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <div style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                    Investments
+                    <span style="font-size: 14px; color: #777; font-weight: 500;">
+                        (2 accounts)
+                    </span>
+                    <span style="float: right; font-size: 14px;">
+                        $188,950
+                        
+                    </span>
+                </div>
+
+                
+                <div class="account">
+                    <div style="flex: 1;">
+                        <div class="account-name">Investment Account - Stocks - 1234</div>
+                        
+                        <div class="account-institution">Investment Firm A</div>
+                        
+                    </div>
+                    <div class="account-value">
+                        <div class="account-balance">$111,575</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="account">
+                    <div style="flex: 1;">
+                        <div class="account-name">Investment Account - Bonds - 5678</div>
+                        
+                        <div class="account-institution">Investment Firm A</div>
+                        
+                    </div>
+                    <div class="account-value">
+                        <div class="account-balance">$77,375</div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <div style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                    Vehicles
+                    <span style="font-size: 14px; color: #777; font-weight: 500;">
+                        (2 accounts)
+                    </span>
+                    <span style="float: right; font-size: 14px;">
+                        $77,000
+                        
+                    </span>
+                </div>
+
+                
+                <div class="account">
+                    <div style="flex: 1;">
+                        <div class="account-name">Vehicle 1</div>
+                        
+                    </div>
+                    <div class="account-value">
+                        <div class="account-balance">$45,000</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="account">
+                    <div style="flex: 1;">
+                        <div class="account-name">Vehicle 2</div>
+                        
+                    </div>
+                    <div class="account-value">
+                        <div class="account-balance">$32,000</div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <div style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                    Banks
+                    <span style="font-size: 14px; color: #777; font-weight: 500;">
+                        (2 accounts)
+                    </span>
+                    <span style="float: right; font-size: 14px;">
+                        $65,550
+                        
+                    </span>
+                </div>
+
+                
+                <div class="account">
+                    <div style="flex: 1;">
+                        <div class="account-name">Savings Account</div>
+                        
+                        <div class="account-institution">First National Bank</div>
+                        
+                    </div>
+                    <div class="account-value">
+                        <div class="account-balance">$50,050</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="account">
+                    <div style="flex: 1;">
+                        <div class="account-name">Checking Account</div>
+                        
+                        <div class="account-institution">First National Bank</div>
+                        
+                    </div>
+                    <div class="account-value">
+                        <div class="account-balance">$15,500</div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <div style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                    Crypto
+                    <span style="font-size: 14px; color: #777; font-weight: 500;">
+                        (1 account)
+                    </span>
+                    <span style="float: right; font-size: 14px;">
+                        $21,875
+                        
+                    </span>
+                </div>
+
+                
+                <div class="account">
+                    <div style="flex: 1;">
+                        <div class="account-name">Crypto Wallet</div>
+                        
+                        <div class="account-institution">Crypto Exchange</div>
+                        
+                    </div>
+                    <div class="account-value">
+                        <div class="account-balance">$21,875</div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+        </div>
+        
+
+        
+        <div class="section">
+            <div class="section-title">
+                <span>Liabilities</span>
+                <span style="font-size: 16px; font-weight: 600;">
+                    Total: $439,920
+                    
+                </span>
+            </div>
+            
+            <div class="account">
+                <div style="flex: 1;">
+                    <div class="account-name">Mortgage - Primary Residence</div>
+                    
+                    <div class="account-institution">Mortgage Bank</div>
+                    
+                </div>
+                <div class="account-value">
+                    <div class="account-balance">$424,950</div>
+                    
+                </div>
+            </div>
+            
+            <div class="account">
+                <div style="flex: 1;">
+                    <div class="account-name">Auto Loan - Vehicle 1</div>
+                    
+                    <div class="account-institution">Auto Finance Co</div>
+                    
+                </div>
+                <div class="account-value">
+                    <div class="account-balance">$14,970</div>
+                    
+                </div>
+            </div>
+            
+        </div>
+        
+
+        
+        <div class="section">
+            <div class="section-title">Asset Allocation</div>
+            <div style="text-align: center;">
+                <img src="cid:allocation_chart" alt="Asset Allocation Chart" style="max-width: 100%; height: auto;" />
+            </div>
+        </div>
+        
+
+        <div class="footer">
+            Report generated on Oct 24, 2025<br>
+            <a href="https://github.com/the-mace/kubera-reporting" style="color: #0066cc; text-decoration: none;">kubera-reporting on GitHub</a>
+        </div>
+    </div>
+</body>
+</html>

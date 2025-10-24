@@ -1,0 +1,75 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kubera-reporting"
+version = "0.1.0"
+description = "Daily reporting and AI-powered analysis for Kubera portfolio data"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Rob"},
+]
+keywords = ["kubera", "portfolio", "reporting", "wealth-management", "ai"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
+dependencies = [
+    "kubera-api @ git+https://github.com/the-mace/kubera-python-api.git",
+    "click>=8.1.0",
+    "rich>=13.0.0",
+    "python-dotenv>=1.0.0",
+    "litellm>=1.0.0",
+    "jinja2>=3.1.0",
+    "matplotlib>=3.8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.3.0",
+    "mypy>=1.8.0",
+]
+
+[project.scripts]
+kubera-report = "kubera_reporting.cli:cli"
+
+[project.urls]
+Homepage = "https://github.com/the-mace/kubera-reporting"
+Documentation = "https://github.com/the-mace/kubera-reporting#readme"
+Repository = "https://github.com/the-mace/kubera-reporting"
+Issues = "https://github.com/the-mace/kubera-reporting/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["kubera_reporting"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
