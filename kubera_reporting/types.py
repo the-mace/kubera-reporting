@@ -69,5 +69,6 @@ class ReportData(TypedDict):
     current: PortfolioSnapshot
     previous: PortfolioSnapshot | None
     net_worth_change: MoneyValue | None
+    net_worth_change_percent: float | None
     asset_changes: list[AccountDelta]
     debt_changes: list[AccountDelta]

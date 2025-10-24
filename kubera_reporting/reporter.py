@@ -96,13 +96,18 @@ class PortfolioReporter:
         if previous:
             previous = self._aggregate_holdings_to_accounts(previous)
 
-        # Calculate net worth change
+        # Calculate net worth change and percentage
         net_worth_change: MoneyValue | None = None
+        net_worth_change_percent: float | None = None
         if previous:
             net_worth_change = {
                 "amount": current["net_worth"]["amount"] - previous["net_worth"]["amount"],
                 "currency": current["currency"],
             }
+            if previous["net_worth"]["amount"] != 0:
+                net_worth_change_percent = (
+                    net_worth_change["amount"] / abs(previous["net_worth"]["amount"])
+                ) * 100
 
         # Build account lookup for previous snapshot
         prev_accounts = {}
@@ -163,6 +168,7 @@ class PortfolioReporter:
             "current": current,
             "previous": previous,
             "net_worth_change": net_worth_change,
+            "net_worth_change_percent": net_worth_change_percent,
             "asset_changes": asset_changes,
             "debt_changes": debt_changes,
         }
@@ -400,9 +406,8 @@ Portfolio Data:
         top_n: int = 20,
         ai_summary: str | None = None,
         recipient_name: str | None = None,
-        embed_chart_data: bool = False,
     ) -> str:
-        """Generate HTML email report.
+        """Generate HTML email report with embedded base64 charts for better forwarding.
 
         Args:
             report_data: Report data
@@ -410,10 +415,9 @@ Portfolio Data:
             top_n: Number of top movers to show (default: 20)
             ai_summary: Optional AI-generated summary
             recipient_name: Optional name for greeting (default: "Portfolio Report")
-            embed_chart_data: If True, embed chart as base64 for standalone viewing (default: False)
 
         Returns:
-            HTML report string
+            HTML report string with inline styles and base64-embedded charts
 
         Raises:
             ReportGenerationError: If generation fails
@@ -458,17 +462,28 @@ Portfolio Data:
             asset_movers = report_data["asset_changes"][:top_n]
             debt_movers = report_data["debt_changes"][:top_n]
 
-            # Calculate total changes
+            # Calculate total changes and percentages
             total_asset_change = sum(d["change"]["amount"] for d in report_data["asset_changes"])
             total_debt_change = sum(d["change"]["amount"] for d in report_data["debt_changes"])
+
+            # Calculate percentage changes for totals
+            total_asset_change_percent = None
+            total_debt_change_percent = None
+            if report_data["previous"]:
+                prev_total_assets = report_data["previous"]["total_assets"]["amount"]
+                if prev_total_assets != 0:
+                    total_asset_change_percent = (total_asset_change / prev_total_assets) * 100
+
+                prev_total_debts = report_data["previous"]["total_debts"]["amount"]
+                if prev_total_debts != 0:
+                    total_debt_change_percent = (total_debt_change / prev_total_debts) * 100
 
             # Calculate asset allocation
             allocation = self.calculate_asset_allocation(report_data["current"])
 
-            # Prepare chart source (for email: cid, for standalone: base64)
-            chart_src = "cid:allocation_chart"
-            if embed_chart_data and allocation:
-                # Generate chart and embed as base64 data URL
+            # Always embed chart as base64 data URL for better forwarding compatibility
+            chart_src = ""
+            if allocation:
                 import base64
 
                 chart_bytes = self.generate_allocation_chart(allocation)
@@ -495,12 +510,15 @@ Portfolio Data:
                 current=report_data["current"],
                 previous=report_data["previous"],
                 net_worth_change=report_data["net_worth_change"],
+                net_worth_change_percent=report_data["net_worth_change_percent"],
                 asset_movers=asset_movers,
                 debt_movers=debt_movers,
                 assets_by_sheet=sorted_sheets,
                 sheet_totals=sheet_totals,
                 total_asset_change=total_asset_change,
+                total_asset_change_percent=total_asset_change_percent,
                 total_debt_change=total_debt_change,
+                total_debt_change_percent=total_debt_change_percent,
                 allocation=allocation,
                 chart_src=chart_src,
                 ai_summary=ai_summary,
@@ -555,8 +573,14 @@ Portfolio Data:
             return f"{formatted_money} ({category})"
         return formatted_money
 
-    def _format_change(self, change: MoneyValue) -> tuple[str, str]:
-        """Format change value with color.
+    def _format_change(
+        self, change: MoneyValue, change_percent: float | None = None
+    ) -> tuple[str, str]:
+        """Format change value with color and optional percentage.
+
+        Args:
+            change: Money change amount
+            change_percent: Optional percentage change
 
         Returns:
             Tuple of (formatted_string, color)
@@ -564,51 +588,42 @@ Portfolio Data:
         symbol = "$" if change["currency"] == "USD" else change["currency"]
         amount = change["amount"]
 
+        # Format the base change amount
         if amount > 0:
-            return f"↑ {symbol}{amount:,.0f}", "#00b383"  # Green with up arrow
+            base_text = f"↑ {symbol}{amount:,.0f}"
+            color = "#00b383"  # Green with up arrow
         elif amount < 0:
-            return f"↓ {symbol}{abs(amount):,.0f}", "#e63946"  # Red with down arrow
+            base_text = f"↓ {symbol}{abs(amount):,.0f}"
+            color = "#e63946"  # Red with down arrow
         else:
-            return f"{symbol}{amount:,.0f}", "#666666"  # Gray
+            base_text = f"{symbol}{amount:,.0f}"
+            color = "#666666"  # Gray
+
+        # Add percentage if provided
+        if change_percent is not None:
+            if change_percent > 0:
+                base_text += f" (+{change_percent:.2f}%)"
+            elif change_percent < 0:
+                base_text += f" ({change_percent:.2f}%)"
+            else:
+                base_text += " (0.00%)"
+
+        return base_text, color
 
     def _get_html_template(self) -> str:
-        """Get HTML email template."""
+        """Get HTML email template with inline styles for better forwarding compatibility."""
         return """<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-               margin: 0; padding: 20px; background-color: #f5f5f5; }
-        .container { max-width: 600px; margin: 0 auto; background-color: white;
-                     border-radius: 8px; padding: 30px; }
-        h1 { color: #333; font-size: 24px; margin-bottom: 10px; }
-        .subtitle { color: #666; font-size: 14px; margin-bottom: 30px; }
-        .net-worth { background-color: #f8f9fa; padding: 20px; border-radius: 8px;
-                      margin-bottom: 30px; }
-        .net-worth-value { font-size: 32px; font-weight: bold; color: #333; }
-        .net-worth-change { font-size: 18px; font-weight: 600; margin-top: 5px; }
-        .section { margin-bottom: 30px; }
-        .section-title { font-size: 18px; font-weight: 600; color: #333;
-                         margin-bottom: 15px; border-bottom: 2px solid #e0e0e0;
-                         padding-bottom: 10px; display: flex; justify-content: space-between;
-                         align-items: center; }
-        .account { display: flex; justify-content: space-between; align-items: center;
-                   padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
-        .account-name { font-weight: 500; color: #333; }
-        .account-institution { font-size: 12px; color: #999; }
-        .account-value { text-align: right; }
-        .account-balance { font-weight: 600; color: #333; }
-        .account-change { font-size: 14px; font-weight: 600; }
-        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;
-                  color: #999; font-size: 12px; text-align: center; }
-    </style>
 </head>
-<body>
-    <div class="container">
-        <h1>{{ recipient_name }}</h1>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; \
+margin: 0; padding: 20px; background-color: #f5f5f5;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; \
+padding: 30px;">
+        <h1 style="color: #333; font-size: 24px; margin-bottom: 10px;">{{ recipient_name }}</h1>
         {% if previous %}
-        <div class="subtitle">
+        <div style="color: #666; font-size: 14px; margin-bottom: 30px;">
             <strong>{{ report_type }} Report</strong> -
             {% if report_type == "Daily" %}
             Here's a recap of account balances that changed yesterday.
@@ -623,7 +638,7 @@ Portfolio Data:
             {% endif %}
         </div>
         {% else %}
-        <div class="subtitle">
+        <div style="color: #666; font-size: 14px; margin-bottom: 30px;">
             <strong>{{ report_type }} Report</strong> - Here's a snapshot of your current
             account balances.
         </div>
@@ -638,24 +653,31 @@ margin-bottom: 8px;">AI INSIGHTS</div>
         </div>
         {% endif %}
 
-        <div class="net-worth">
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; \
+margin-bottom: 30px;">
             <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Net worth</div>
-            <div class="net-worth-value">{{ format_net_worth(current.net_worth) }}</div>
+            <div style="font-size: 32px; font-weight: bold; color: #333;">\
+{{ format_net_worth(current.net_worth) }}</div>
             {% if net_worth_change %}
-            {% set change_text, change_color = format_change(net_worth_change) %}
-            <div class="net-worth-change" style="color: {{ change_color }};">{{ change_text }}</div>
+            {% set change_text, change_color = format_change(
+                net_worth_change, net_worth_change_percent) %}
+            <div style="font-size: 18px; font-weight: 600; margin-top: 5px; color: \
+{{ change_color }};">{{ change_text }}</div>
             {% endif %}
         </div>
 
         {% if assets_by_sheet %}
-        <div class="section">
-            <div class="section-title">
+        <div style="margin-bottom: 30px;">
+            <div style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; \
+border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: flex; justify-content: \
+space-between; align-items: center;">
                 <span>Assets</span>
                 <span style="font-size: 16px; font-weight: 600;">
                     Total: {{ format_money(current.total_assets) }}
                     {% if previous and total_asset_change %}
                     {% set change_text, change_color = format_change(
-                        {'amount': total_asset_change, 'currency': current.currency}) %}
+                        {'amount': total_asset_change, 'currency': current.currency},
+                        total_asset_change_percent) %}
                     <span style="color: {{ change_color }}; margin-left: 10px;">\
 {{ change_text }}</span>
                     {% endif %}
@@ -677,31 +699,32 @@ margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
                         {% if previous and sheet_totals[sheet_name].total_change %}
                         {% set sheet_change_text, sheet_change_color = format_change(
                             {'amount': sheet_totals[sheet_name].total_change, \
-'currency': current.currency}) %}
+'currency': current.currency},
+                            sheet_totals[sheet_name].change_percent) %}
                         <span style="color: {{ sheet_change_color }}; margin-left: 8px; \
 font-size: 13px;">
                             {{ sheet_change_text }}
-                            {% if sheet_totals[sheet_name].change_percent is not none %}
-                            ({{ "%.2f"|format(sheet_totals[sheet_name].change_percent) }}%)
-                            {% endif %}
                         </span>
                         {% endif %}
                     </span>
                 </div>
 
                 {% for account in accounts %}
-                <div class="account">
+                <div style="display: flex; justify-content: space-between; align-items: center; \
+padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
                     <div style="flex: 1;">
-                        <div class="account-name">{{ account.name }}</div>
+                        <div style="font-weight: 500; color: #333;">{{ account.name }}</div>
                         {% if account.institution %}
-                        <div class="account-institution">{{ account.institution }}</div>
+                        <div style="font-size: 12px; color: #999;">{{ account.institution }}</div>
                         {% endif %}
                     </div>
-                    <div class="account-value">
-                        <div class="account-balance">{{ format_money(account.current_value) }}</div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 600; color: #333;">\
+{{ format_money(account.current_value) }}</div>
                         {% if previous %}
-                        {% set change_text, change_color = format_change(account.change) %}
-                        <div class="account-change" style="color: {{ change_color }};">\
+                        {% set change_text, change_color = format_change(
+                            account.change, account.change_percent) %}
+                        <div style="font-size: 14px; font-weight: 600; color: {{ change_color }};">\
 {{ change_text }}</div>
                         {% endif %}
                     </div>
@@ -713,32 +736,38 @@ font-size: 13px;">
         {% endif %}
 
         {% if debt_movers %}
-        <div class="section">
-            <div class="section-title">
+        <div style="margin-bottom: 30px;">
+            <div style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; \
+border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: flex; justify-content: \
+space-between; align-items: center;">
                 <span>Liabilities</span>
                 <span style="font-size: 16px; font-weight: 600;">
                     Total: {{ format_money(current.total_debts) }}
                     {% if previous and total_debt_change %}
                     {% set change_text, change_color = format_change(
-                        {'amount': total_debt_change, 'currency': current.currency}) %}
+                        {'amount': total_debt_change, 'currency': current.currency},
+                        total_debt_change_percent) %}
                     <span style="color: {{ change_color }}; margin-left: 10px;">\
 {{ change_text }}</span>
                     {% endif %}
                 </span>
             </div>
             {% for account in debt_movers %}
-            <div class="account">
+            <div style="display: flex; justify-content: space-between; align-items: center; \
+padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
                 <div style="flex: 1;">
-                    <div class="account-name">{{ account.name }}</div>
+                    <div style="font-weight: 500; color: #333;">{{ account.name }}</div>
                     {% if account.institution %}
-                    <div class="account-institution">{{ account.institution }}</div>
+                    <div style="font-size: 12px; color: #999;">{{ account.institution }}</div>
                     {% endif %}
                 </div>
-                <div class="account-value">
-                    <div class="account-balance">{{ format_money(account.current_value) }}</div>
+                <div style="text-align: right;">
+                    <div style="font-weight: 600; color: #333;">\
+{{ format_money(account.current_value) }}</div>
                     {% if previous %}
-                    {% set change_text, change_color = format_change(account.change) %}
-                    <div class="account-change" style="color: {{ change_color }};">\
+                    {% set change_text, change_color = format_change(
+                        account.change, account.change_percent) %}
+                    <div style="font-size: 14px; font-weight: 600; color: {{ change_color }};">\
 {{ change_text }}</div>
                     {% endif %}
                 </div>
@@ -748,8 +777,9 @@ font-size: 13px;">
         {% endif %}
 
         {% if allocation %}
-        <div class="section">
-            <div class="section-title">Asset Allocation</div>
+        <div style="margin-bottom: 30px;">
+            <div style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; \
+border-bottom: 2px solid #e0e0e0; padding-bottom: 10px;">Asset Allocation</div>
             <div style="text-align: center;">
                 <img src="{{ chart_src }}" alt="Asset Allocation Chart" \
 style="max-width: 100%; height: auto;" />
@@ -757,7 +787,8 @@ style="max-width: 100%; height: auto;" />
         </div>
         {% endif %}
 
-        <div class="footer">
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; \
+color: #999; font-size: 12px; text-align: center;">
             Report generated on {{ report_date }}<br>
             <a href="https://github.com/the-mace/kubera-reporting" \
 style="color: #0066cc; text-decoration: none;">kubera-reporting on GitHub</a>
