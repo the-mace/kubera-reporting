@@ -114,7 +114,7 @@ def test_second_day_report_with_deltas(snapshot_2025_01_15, snapshot_2025_01_16)
     assert "Crypto Wallet" in html
     assert "↓ $3,125" in html  # Top asset mover (negative) with down arrow
     assert "Asset Allocation" in html  # Should have allocation chart
-    assert "cid:allocation_chart" in html  # Embedded chart image
+    assert "data:image/png;base64," in html  # Base64-embedded chart for forwarding compatibility
 
 
 def test_storage_round_trip(snapshot_2025_01_16):

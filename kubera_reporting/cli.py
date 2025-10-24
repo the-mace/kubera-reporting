@@ -56,13 +56,10 @@ def _generate_and_send_report(
         if ai_summary:
             console.print(f"[green]✓[/green] AI insights generated for {report_type.value} report")
 
+    # Generate HTML report with embedded chart (base64 for better forwarding)
     html_report = reporter.generate_html_report(
         report_data, report_type=report_type, ai_summary=ai_summary, recipient_name=recipient_name
     )
-
-    # Generate chart image
-    allocation = reporter.calculate_asset_allocation(current_snapshot)
-    chart_image = reporter.generate_allocation_chart(allocation) if allocation else None
 
     console.print(f"[green]✓[/green] {report_type.value.capitalize()} report generated")
 
@@ -81,7 +78,7 @@ def _generate_and_send_report(
     period_desc = period_descriptions.get(report_type, "balance activity")
     subject = f"Your portfolio {period_desc} for {report_date}"
 
-    emailer.send_html_email(subject, html_report, chart_image=chart_image)
+    emailer.send_html_email(subject, html_report)
     console.print(f"[green]✓[/green] {report_type.value.capitalize()} report sent to {email}")
 
 
@@ -480,7 +477,6 @@ def regenerate_samples() -> None:
             report_data_day1,
             ai_summary=None,
             recipient_name="Test User",
-            embed_chart_data=True,  # Embed chart as base64 for viewing in browser
         )
 
         # Save first day report
@@ -515,7 +511,6 @@ risk profile."""
             report_data_day2,
             ai_summary=ai_summary,
             recipient_name="Test User",
-            embed_chart_data=True,  # Embed chart as base64 for viewing in browser
         )
 
         # Save second day report
@@ -579,11 +574,6 @@ def send_sample(email: str | None, name: str | None) -> None:
         reporter = PortfolioReporter()
         report_data = reporter.calculate_deltas(snapshot_day2, snapshot_day1)
 
-        # Generate allocation chart as bytes (not embedded)
-        allocation = reporter.calculate_asset_allocation(snapshot_day2)
-        chart_bytes = reporter.generate_allocation_chart(allocation)
-        console.print("[green]✓[/green] Generated allocation chart")
-
         # AI summary (same as regenerate_samples)
         ai_summary = (
             "The net worth rose $6,205 (0.46%) today, primarily driven by gains in the "
@@ -601,21 +591,19 @@ def send_sample(email: str | None, name: str | None) -> None:
             "considering a tactical reduction if it persists."
         )
 
-        # Generate HTML report (without embedded chart, since we'll attach it separately)
+        # Generate HTML report with embedded base64 chart
         html_content = reporter.generate_html_report(
             report_data,
             ai_summary=ai_summary,
             recipient_name=name or "Investor",
-            embed_chart_data=False,  # Don't embed - we'll attach separately for email
         )
-        console.print("[green]✓[/green] Generated HTML report")
+        console.print("[green]✓[/green] Generated HTML report with embedded chart")
 
         # Send email
         emailer = EmailSender(recipient=email)
         emailer.send_html_email(
             subject="Sample Kubera Portfolio Report (Daily)",
             html_content=html_content,
-            chart_image=chart_bytes,
         )
 
         console.print(f"\n[bold green]✓ Email sent successfully to {email}![/bold green]")

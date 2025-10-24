@@ -1,7 +1,6 @@
 """Send email reports via local mail command."""
 
 import subprocess
-from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -24,30 +23,27 @@ class EmailSender:
         subject: str,
         html_content: str,
         from_address: str | None = None,
-        chart_image: bytes | None = None,
     ) -> None:
         """Send HTML email via local mail command.
 
+        Charts are now embedded as base64 data URLs in the HTML for better forwarding compatibility.
+
         Args:
             subject: Email subject
-            html_content: HTML content
+            html_content: HTML content with inline styles and base64-embedded images
             from_address: From address (optional)
-            chart_image: Optional pie chart image as bytes
 
         Raises:
             EmailError: If sending fails
         """
         try:
-            # Create MIME multipart message with related parts for inline images
-            msg = MIMEMultipart("related")
+            # Create MIME multipart message for text and HTML alternatives
+            msg = MIMEMultipart("alternative")
             msg["Subject"] = subject
             msg["To"] = self.recipient
 
             if from_address:
                 msg["From"] = from_address
-
-            # Create alternative part for text and HTML
-            msg_alternative = MIMEMultipart("alternative")
 
             # Create plain text version (fallback)
             text_content = "This email requires an HTML-capable email client."
@@ -55,18 +51,8 @@ class EmailSender:
             html_part = MIMEText(html_content, "html", "utf-8")
 
             # Attach parts (text first, then HTML as per RFC 2046)
-            msg_alternative.attach(text_part)
-            msg_alternative.attach(html_part)
-
-            # Attach the alternative part to the main message
-            msg.attach(msg_alternative)
-
-            # Attach chart image as inline if provided
-            if chart_image:
-                image = MIMEImage(chart_image, _subtype="png")
-                image.add_header("Content-ID", "<allocation_chart>")
-                image.add_header("Content-Disposition", "inline", filename="allocation_chart.png")
-                msg.attach(image)
+            msg.attach(text_part)
+            msg.attach(html_part)
 
             # Send via sendmail command (more reliable than mail on macOS)
             sendmail_cmd = ["/usr/sbin/sendmail", "-t", "-oi"]

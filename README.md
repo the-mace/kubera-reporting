@@ -516,10 +516,35 @@ Completed features:
 
 Potential future enhancements:
 
-- ⬜ Trend analysis and historical charts
+### Trend Analysis & Historical Charts
+- ⬜ Net worth trend line charts (30-day, 90-day, 1-year views)
+- ⬜ Asset allocation changes over time (stacked area charts)
+- ⬜ Account-level performance trends
+- ⬜ Moving averages and volatility metrics
+- ⬜ Year-over-year comparison charts
+
+### Smart Signals & Alerts
+- ⬜ **Allocation drift detection**: Alert when asset allocation deviates from target
+- ⬜ **Large change alerts**: Notify on significant account movements (>10%)
+- ⬜ **Milestone celebrations**: Track new net worth highs and FIRE milestones
+- ⬜ **Unusual activity detection**: Flag abnormal patterns across multiple accounts
+- ⬜ **Threshold notifications**: Custom alerts (e.g., "crypto allocation > 15%")
+- ⬜ **Market correlation signals**: Detect when portfolio moves against market trends
+
+### Rebalance Recommendations
+- ⬜ **Target allocation tracking**: Define and monitor desired asset mix (e.g., 60/30/10 stocks/bonds/cash)
+- ⬜ **Automatic rebalance suggestions**: Calculate specific trades needed to reach target allocation
+- ⬜ **Rebalancing triggers**: Alert when drift exceeds configured threshold (e.g., >5%)
+- ⬜ **Tax-aware recommendations**: Prioritize taxable vs. tax-advantaged accounts
+- ⬜ **Dollar-cost averaging scheduler**: Suggest optimal times for regular investments
+- ⬜ **Portfolio optimization**: AI-powered suggestions based on risk tolerance and goals
+
+### Other Enhancements
 - ⬜ Custom report templates
 - ⬜ Web dashboard interface
-- ⬜ Alert notifications for large changes
+- ⬜ Export to CSV/Excel for tax reporting
+- ⬜ Integration with other financial tools
+- ⬜ Multi-portfolio comparison reports
 
 ## Development
 
