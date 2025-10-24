@@ -60,6 +60,12 @@ kubera-report report --test
 # View historical snapshot (no API call)
 kubera-report show --date 2025-01-15
 
+# Send email report for a historical date (no API call, uses saved snapshot)
+kubera-report send --date 2025-01-15
+
+# Send to specific email and skip AI insights
+kubera-report send --date 2025-01-15 --email user@example.com --no-ai
+
 # List all snapshots
 kubera-report list-snapshots
 
@@ -203,9 +209,60 @@ All tests use anonymized fixtures in `tests/fixtures/`:
 - Ensures examples can be imported without errors
 - Uses mocks to avoid API calls (KuberaFetcher, LLMClient)
 
+**Send command testing** (`test_send_command.py`):
+- Tests the `send` command with `--dry-run` flag
+- Verifies multi-period report detection (daily, weekly, etc.)
+- Tests error handling (missing snapshots, invalid dates)
+- NO emails are sent during tests (uses --dry-run)
+
 Sample reports are generated to `sample_reports/`:
 - `sample_report_first_day.html` - No deltas
 - `sample_report_with_deltas.html` - With changes and AI insights
+
+### Email Testing Guidelines
+
+**CRITICAL**: Never send real emails during testing or development unless explicitly requested by a live user.
+
+**Rules**:
+1. **Always use `--dry-run` flag** when testing email-related commands
+2. **Never use CliRunner without `--dry-run`** for commands that send emails
+3. **Mock EmailSender** in unit tests that don't use CLI
+4. **Use `--test` flag** for the `report` command when testing (uses fixtures, sends to configured email)
+5. **Fixture emails must use reserved domains**: test@example.com, user@example.org (RFC 2606)
+
+**Example - Correct Testing**:
+```bash
+# Testing send command - use --dry-run
+kubera-report send --date 2025-01-15 --dry-run --no-ai
+
+# Testing report command - use --test flag
+kubera-report report --test
+```
+
+**Example - Correct Test Code**:
+```python
+# Good: Uses --dry-run flag
+runner.invoke(cli, ["send", "--date", "2025-01-15", "--dry-run"])
+
+# Good: Mocks the email sender
+with patch("kubera_reporting.cli.EmailSender") as mock_emailer:
+    runner.invoke(cli, ["send", "--date", "2025-01-15"])
+```
+
+**Example - INCORRECT (DO NOT DO THIS)**:
+```python
+# BAD: Will send real email!
+runner.invoke(cli, ["send", "--date", "2025-01-15"])
+
+# BAD: Will attempt to send to test@example.com
+runner.invoke(cli, ["send", "--date", "2025-01-15", "--email", "test@example.com"])
+```
+
+**Why this matters**:
+- Avoids spamming real email addresses during development
+- Prevents accidental emails to users during testing
+- Respects email server rate limits
+- Maintains professional development practices
 
 ## Development Workflow
 

@@ -34,6 +34,8 @@ def _generate_and_send_report(
     email: str,
     recipient_name: str | None = None,
     generate_ai: bool = True,
+    report_date: datetime | None = None,
+    dry_run: bool = False,
 ) -> None:
     """Helper function to generate and send a single report.
 
@@ -44,6 +46,8 @@ def _generate_and_send_report(
         email: Email address to send to
         recipient_name: Optional recipient name for personalization
         generate_ai: Whether to generate AI insights (default: True)
+        report_date: Optional date for the report (defaults to today)
+        dry_run: If True, generate report but don't send email (default: False)
     """
     reporter = PortfolioReporter()
     report_data = reporter.calculate_deltas(current_snapshot, previous_snapshot)
@@ -63,23 +67,29 @@ def _generate_and_send_report(
 
     console.print(f"[green]✓[/green] {report_type.value.capitalize()} report generated")
 
-    # Send email
-    emailer = EmailSender(email)
-    report_date = datetime.now().strftime("%b %d")
+    # Send email (unless dry-run)
+    if dry_run:
+        console.print(
+            f"[yellow]⊘[/yellow] {report_type.value.capitalize()} report NOT sent (dry-run mode)"
+        )
+    else:
+        emailer = EmailSender(email)
+        date_to_use = report_date if report_date else datetime.now()
+        report_date_str = date_to_use.strftime("%b %d")
 
-    # Format subject based on report type
-    period_descriptions = {
-        ReportType.DAILY: "balance activity",
-        ReportType.WEEKLY: "weekly summary",
-        ReportType.MONTHLY: "monthly summary",
-        ReportType.QUARTERLY: "quarterly summary",
-        ReportType.YEARLY: "yearly summary",
-    }
-    period_desc = period_descriptions.get(report_type, "balance activity")
-    subject = f"Your portfolio {period_desc} for {report_date}"
+        # Format subject based on report type
+        period_descriptions = {
+            ReportType.DAILY: "balance activity",
+            ReportType.WEEKLY: "weekly summary",
+            ReportType.MONTHLY: "monthly summary",
+            ReportType.QUARTERLY: "quarterly summary",
+            ReportType.YEARLY: "yearly summary",
+        }
+        period_desc = period_descriptions.get(report_type, "balance activity")
+        subject = f"Your portfolio {period_desc} for {report_date_str}"
 
-    emailer.send_html_email(subject, html_report)
-    console.print(f"[green]✓[/green] {report_type.value.capitalize()} report sent to {email}")
+        emailer.send_html_email(subject, html_report)
+        console.print(f"[green]✓[/green] {report_type.value.capitalize()} report sent to {email}")
 
 
 @cli.command()
@@ -440,6 +450,139 @@ def list_snapshots(data_dir: str | None) -> None:
             table.add_row(date_str, str(file_path))
 
         console.print(table)
+
+    except KuberaReportingError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        sys.exit(1)
+    except Exception as e:
+        console.print(f"[red]Unexpected error:[/red] {e}")
+        sys.exit(1)
+
+
+@cli.command()
+@click.option(
+    "--date",
+    required=True,
+    help="Date of snapshot to send report for (YYYY-MM-DD)",
+)
+@click.option(
+    "--email", help="Email address to send report to (uses KUBERA_REPORT_EMAIL env if not set)"
+)
+@click.option(
+    "--name",
+    help="Recipient name for personalization (uses KUBERA_REPORT_NAME env if not set)",
+)
+@click.option("--data-dir", help="Data directory (default: ~/.kubera-reporting/data)")
+@click.option(
+    "--no-ai",
+    is_flag=True,
+    help="Skip AI insights generation",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Generate report without sending email (for testing)",
+)
+def send(
+    date: str,
+    email: str | None,
+    name: str | None,
+    data_dir: str | None,
+    no_ai: bool,
+    dry_run: bool,
+) -> None:
+    """Send email report for a specific historical date."""
+    try:
+        import os
+
+        # Parse the date
+        try:
+            snapshot_date = datetime.strptime(date, "%Y-%m-%d")
+        except ValueError:
+            console.print(
+                "[red]Error:[/red] Invalid date format. Please use YYYY-MM-DD (e.g., 2025-01-15)"
+            )
+            sys.exit(1)
+
+        # Initialize storage
+        storage = SnapshotStorage(data_dir)
+
+        # Load snapshot for the specified date
+        current_snapshot = storage.load_snapshot(snapshot_date)
+        if not current_snapshot:
+            console.print(f"[red]Error:[/red] No snapshot found for {date}")
+            console.print(
+                f"\nUse 'kubera-report list-snapshots' to see available dates, "
+                f"or 'kubera-report show --date {date}' to fetch and save this snapshot first."
+            )
+            sys.exit(1)
+
+        console.print(
+            f"[green]✓[/green] Loaded snapshot for {date} "
+            f"(Net Worth: ${current_snapshot['net_worth']['amount']:,.2f})"
+        )
+
+        # Get email address (not required for dry-run)
+        if not dry_run:
+            if not email:
+                email = os.getenv("KUBERA_REPORT_EMAIL")
+                if not email:
+                    console.print(
+                        "[red]Error:[/red] No email address specified. "
+                        "Use --email or set KUBERA_REPORT_EMAIL environment variable."
+                    )
+                    sys.exit(1)
+        else:
+            # Dry-run mode: use placeholder if no email provided
+            if not email:
+                email = os.getenv("KUBERA_REPORT_EMAIL", "dry-run@example.com")
+            console.print("[yellow]Dry-run mode:[/yellow] Report will be generated but not sent")
+
+        # Get recipient name for personalization
+        if not name:
+            name = os.getenv("KUBERA_REPORT_NAME")
+
+        # Determine which report types to generate for this date
+        report_types = storage.get_milestone_types(snapshot_date)
+        console.print(
+            f"[bold]Generating {len(report_types)} report(s): "
+            f"{', '.join(rt.value for rt in report_types)}[/bold]"
+        )
+
+        # Generate and send each report type
+        for report_type in report_types:
+            console.print(f"\n[bold cyan]--- {report_type.value.upper()} REPORT ---[/bold cyan]")
+
+            # Get appropriate comparison snapshot for this report type
+            previous_snapshot = storage.get_comparison_snapshot(snapshot_date, report_type)
+
+            if not previous_snapshot:
+                console.print(
+                    f"[yellow]Note:[/yellow] No comparison snapshot found for "
+                    f"{report_type.value} report. Generating report with current balances only."
+                )
+
+            # Generate and send this report
+            _generate_and_send_report(
+                current_snapshot,
+                previous_snapshot,
+                report_type,
+                email,
+                name,
+                generate_ai=not no_ai,
+                report_date=snapshot_date,
+                dry_run=dry_run,
+            )
+
+        if dry_run:
+            console.print(
+                f"\n[bold green]Done![/bold green] Generated {len(report_types)} report(s) "
+                f"(dry-run, no emails sent)"
+            )
+        else:
+            console.print(
+                f"\n[bold green]Done![/bold green] Sent {len(report_types)} report(s) to {email}"
+            )
 
     except KuberaReportingError as e:
         console.print(f"[red]Error:[/red] {e}")

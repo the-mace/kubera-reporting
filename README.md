@@ -194,6 +194,9 @@ kubera-report show
 # Show historical snapshot
 kubera-report show --date 2025-01-15
 
+# Send email report for a historical date
+kubera-report send --date 2025-01-15
+
 # List all snapshots
 kubera-report list-snapshots
 ```
@@ -227,6 +230,30 @@ Options:
   --date TEXT          Show snapshot for date (YYYY-MM-DD)
   --data-dir TEXT      Data directory
 ```
+
+### `kubera-report send`
+
+Send email report for a historical date.
+
+```bash
+kubera-report send --date YYYY-MM-DD [OPTIONS]
+
+Options:
+  --date TEXT          Date of snapshot to send report for (required)
+  --email TEXT         Email address to send to
+  --name TEXT          Recipient name for personalization
+  --no-ai              Skip AI insights generation
+  --dry-run            Generate report without sending email (for testing)
+  --data-dir TEXT      Data directory
+```
+
+This command is useful for:
+- Re-sending a report for a past date
+- Sending a report to someone else
+- Generating reports for dates you missed
+- Testing report generation without sending email (`--dry-run`)
+
+**Note:** The command uses saved snapshots, so no API call is made. The snapshot for the specified date must already exist.
 
 ### `kubera-report query`
 
