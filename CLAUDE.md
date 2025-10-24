@@ -292,3 +292,4 @@ GitHub Actions workflow (`.github/workflows/ci.yml`):
 - Runs ruff (lint + format), mypy, pytest
 - Uploads coverage to Codecov
 - All tests use fixtures (no API credentials needed)
+- be sure to run the ruff checks before committing code

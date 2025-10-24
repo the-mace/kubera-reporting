@@ -2,6 +2,7 @@
 
 from enum import Enum
 from typing import Literal, TypedDict
+
 from typing_extensions import NotRequired
 
 
