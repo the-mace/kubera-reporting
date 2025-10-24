@@ -56,7 +56,7 @@ class LLMClient:
         load_env_file()
 
         # Determine model to use
-        self.model = model or os.getenv("KUBERA_REPORT_LLM_MODEL", DEFAULT_MODEL)
+        selected_model = model or os.getenv("KUBERA_REPORT_LLM_MODEL") or DEFAULT_MODEL
 
         # Convert legacy model names to current format
         model_mapping = {
@@ -64,7 +64,7 @@ class LLMClient:
             "grok-beta": "xai/grok-4-fast-reasoning",
             "grok-2-1212": "xai/grok-4-fast-reasoning",
         }
-        self.model = model_mapping.get(self.model, self.model)
+        self.model: str = model_mapping.get(selected_model, selected_model)
 
     def query_portfolio(
         self,

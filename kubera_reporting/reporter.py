@@ -194,11 +194,11 @@ class PortfolioReporter:
         fig, ax = plt.subplots(figsize=(10, 7))
 
         # Function to only show percentages for slices >= 5%
-        def autopct_format(pct):
+        def autopct_format(pct: float) -> str:
             return f"{pct:.1f}%" if pct >= 5 else ""
 
         # Create pie chart with conditional percentages
-        wedges, texts, autotexts = ax.pie(
+        pie_result = ax.pie(
             values,
             labels=None,  # No labels on pie - use legend instead
             colors=chart_colors,
@@ -207,6 +207,7 @@ class PortfolioReporter:
             textprops={"fontsize": 14, "weight": "bold"},
             pctdistance=0.75,  # Move percentages closer to center
         )
+        wedges, texts, autotexts = pie_result  # type: ignore[misc]
 
         # Make percentage text white for better visibility
         for autotext in autotexts:
@@ -302,7 +303,7 @@ class PortfolioReporter:
             from kubera_reporting.llm_client import LLMClient
 
             # Only generate summary if we have previous data
-            if not report_data["previous"]:
+            if not report_data["previous"] or not report_data["net_worth_change"]:
                 return None
 
             llm = LLMClient()
@@ -317,26 +318,27 @@ class PortfolioReporter:
             }
             period = period_descriptions.get(report_type, "daily")
 
+            # Type narrowing - we know net_worth_change is not None here
+            net_worth_change = report_data["net_worth_change"]
+            previous = report_data["previous"]
+
             # Build context for AI
-            context = {
-                "net_worth_change": report_data["net_worth_change"],
-                "top_asset_movers": [
-                    {
-                        "name": d["name"],
-                        "sheet": d["sheet_name"],
-                        "change": d["change"]["amount"],
-                        "percent": d["change_percent"],
-                    }
-                    for d in report_data["asset_changes"][:10]
-                ],
-                "top_debt_movers": [
-                    {
-                        "name": d["name"],
-                        "change": d["change"]["amount"],
-                    }
-                    for d in report_data["debt_changes"][:5]
-                ],
-            }
+            top_asset_movers = [
+                {
+                    "name": d["name"],
+                    "sheet": d["sheet_name"],
+                    "change": d["change"]["amount"],
+                    "percent": d["change_percent"],
+                }
+                for d in report_data["asset_changes"][:10]
+            ]
+            top_debt_movers = [
+                {
+                    "name": d["name"],
+                    "change": d["change"]["amount"],
+                }
+                for d in report_data["debt_changes"][:5]
+            ]
 
             # Calculate asset allocation
             allocation = self.calculate_asset_allocation(report_data["current"])
@@ -345,20 +347,16 @@ class PortfolioReporter:
             portfolio_data = {
                 "net_worth": {
                     "current": report_data["current"]["net_worth"]["amount"],
-                    "change": context["net_worth_change"]["amount"],
+                    "change": net_worth_change["amount"],
                     "change_percent": (
-                        (
-                            context["net_worth_change"]["amount"]
-                            / report_data["previous"]["net_worth"]["amount"]
-                            * 100
-                        )
-                        if report_data["previous"]["net_worth"]["amount"] != 0
+                        (net_worth_change["amount"] / previous["net_worth"]["amount"] * 100)
+                        if previous["net_worth"]["amount"] != 0
                         else 0
                     ),
                 },
                 "asset_allocation": allocation,
-                "top_asset_movers": context["top_asset_movers"][:10],
-                "top_debt_movers": context["top_debt_movers"][:5],
+                "top_asset_movers": top_asset_movers,
+                "top_debt_movers": top_debt_movers,
             }
 
             prompt = f"""Analyze this {period} portfolio report and provide a concise, actionable \
@@ -484,7 +482,7 @@ Portfolio Data:
             sorted_sheets = dict(
                 sorted(
                     assets_by_sheet.items(),
-                    key=lambda x: sheet_totals[x[0]]["total_value"],
+                    key=lambda x: sheet_totals[x[0]]["total_value"] or 0,
                     reverse=True,
                 )
             )

@@ -2,6 +2,7 @@
 
 import sys
 from datetime import datetime, timezone
+from typing import Any
 
 from kubera import KuberaClient
 from kubera.cache import resolve_portfolio_id, save_portfolio_cache
@@ -48,7 +49,7 @@ class KuberaFetcher:
                 raise DataFetchError("No portfolios found")
 
             # Save to cache for index resolution
-            save_portfolio_cache(portfolios)
+            save_portfolio_cache(portfolios)  # type: ignore[arg-type]
 
             # Resolve portfolio ID (handles both indexes like "4" and GUIDs)
             if portfolio_id is not None:
@@ -68,14 +69,14 @@ class KuberaFetcher:
                 )
 
             # Get detailed portfolio data
-            portfolio = self.client.get_portfolio(portfolio_id)
+            portfolio: dict[str, Any] = self.client.get_portfolio(portfolio_id)  # type: ignore[assignment]
 
             # Extract ALL accounts from assets and debts (raw data)
             # The reporter will handle aggregation/filtering as needed
             accounts: list[AccountSnapshot] = []
 
             # Process assets - save ALL raw data from API
-            for asset in portfolio["asset"]:
+            for asset in portfolio.get("assets", portfolio.get("asset", [])):
                 accounts.append(
                     {
                         "id": asset["id"],
@@ -89,7 +90,7 @@ class KuberaFetcher:
                 )
 
             # Process debts - save ALL raw data from API
-            for debt in portfolio["debt"]:
+            for debt in portfolio.get("debts", portfolio.get("debt", [])):
                 accounts.append(
                     {
                         "id": debt["id"],
@@ -117,9 +118,18 @@ class KuberaFetcher:
                 "portfolio_id": portfolio_id,
                 "portfolio_name": portfolio_info.get("name", "Unknown Portfolio"),
                 "currency": currency,
-                "net_worth": {"amount": portfolio["netWorth"], "currency": currency},
-                "total_assets": {"amount": portfolio["assetTotal"], "currency": currency},
-                "total_debts": {"amount": portfolio["debtTotal"], "currency": currency},
+                "net_worth": {
+                    "amount": portfolio.get("net_worth", portfolio.get("netWorth", 0.0)),
+                    "currency": currency,
+                },
+                "total_assets": {
+                    "amount": portfolio.get("asset_total", portfolio.get("assetTotal", 0.0)),
+                    "currency": currency,
+                },
+                "total_debts": {
+                    "amount": portfolio.get("debt_total", portfolio.get("debtTotal", 0.0)),
+                    "currency": currency,
+                },
                 "accounts": accounts,
             }
 

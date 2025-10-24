@@ -15,7 +15,7 @@ from kubera_reporting.fetcher import KuberaFetcher
 from kubera_reporting.llm_client import LLMClient
 from kubera_reporting.reporter import PortfolioReporter
 from kubera_reporting.storage import SnapshotStorage
-from kubera_reporting.types import ReportType
+from kubera_reporting.types import PortfolioSnapshot, ReportType
 
 console = Console()
 
@@ -28,8 +28,8 @@ def cli() -> None:
 
 
 def _generate_and_send_report(
-    current_snapshot: dict,
-    previous_snapshot: dict | None,
+    current_snapshot: PortfolioSnapshot,
+    previous_snapshot: PortfolioSnapshot | None,
     report_type: ReportType,
     email: str,
     recipient_name: str | None = None,

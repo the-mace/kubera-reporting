@@ -207,9 +207,34 @@ Sample reports are generated to `sample_reports/`:
 Use `scratch/` for temporary test scripts - it's excluded from git. Write test files there instead of piping code to Python.
 
 ### Before Committing
-1. Run all quality checks: `ruff check . && ruff format . && mypy kubera_reporting && pytest`
-2. If you modified report formats, regenerate samples: `kubera-report regenerate-samples`
-3. Include CLAUDE.md changes in the commit if you updated it
+
+**CRITICAL**: Always run ALL quality checks before committing. GitHub Actions will fail if any of these fail.
+
+1. **Run quality checks individually** (do NOT skip any of these):
+   ```bash
+   # Check linting
+   ruff check .
+
+   # Check formatting
+   ruff format --check .
+
+   # Check type annotations - THIS IS CRITICAL!
+   mypy kubera_reporting
+
+   # Run tests
+   pytest
+   ```
+
+2. **Or run all at once** (stops at first failure):
+   ```bash
+   ruff check . && ruff format . && mypy kubera_reporting && pytest
+   ```
+
+3. If you modified report formats, regenerate samples: `kubera-report regenerate-samples`
+
+4. Include CLAUDE.md changes in the commit if you updated it
+
+**Note**: The mypy check is particularly important as it validates type correctness for Python 3.10+ compatibility. Many type errors won't show up in tests but will fail in CI.
 
 ### API Rate Limits
 **IMPORTANT**: Only fetch from Kubera API once per day!

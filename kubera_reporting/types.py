@@ -2,11 +2,7 @@
 
 from enum import Enum
 from typing import Literal, TypedDict
-
-try:
-    from typing import NotRequired
-except ImportError:
-    from typing_extensions import NotRequired
+from typing_extensions import NotRequired
 
 
 class ReportType(Enum):
