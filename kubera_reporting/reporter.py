@@ -39,23 +39,7 @@ class PortfolioReporter:
         Returns:
             Snapshot with only parent accounts (holdings and zero-value accounts removed)
         """
-        # Build set of parent account UUIDs
-        parent_uuids = set()
-
-        # First pass: identify all parent accounts
-        # A parent account is one that has holdings (children with IDs like {parent_id}_xxx)
-        for account in snapshot["accounts"]:
-            acc_id = account["id"]
-            # Check if this looks like a holding (has underscore + suffix)
-            if "_" in acc_id and (
-                "isin-" in acc_id.lower() or "cusip-" in acc_id.lower() or acc_id.endswith("_0")
-            ):
-                # This is a holding - extract parent UUID
-                parent_uuid = acc_id.split("_")[0]
-                parent_uuids.add(parent_uuid)
-
-        # Second pass: keep only parent accounts and standalone accounts
-        # Skip individual holdings and zero-value accounts
+        # Filter out holdings and zero-value accounts
         filtered_accounts = []
 
         for account in snapshot["accounts"]:
@@ -490,6 +474,12 @@ Portfolio Data:
                 sheet = asset["sheet_name"] or "Uncategorized"
                 # Use section_name for sub-grouping, fall back to "Default" if not available
                 section = asset.get("section_name") or "Default"
+
+                # Skip accounts whose name matches the section name (prevents double-counting)
+                # Example: parent account with same name as section shows redundant line item
+                if asset["name"] == section:
+                    continue
+
                 assets_by_sheet[sheet][section].append(asset)
 
             # Sort accounts within each section by value
