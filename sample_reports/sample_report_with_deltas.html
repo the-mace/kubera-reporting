@@ -2,6 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5;">
     <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; padding: 30px;">
@@ -18,7 +19,7 @@
         
         <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #00b383;">
             <div style="color: #666; font-size: 12px; font-weight: 600; margin-bottom: 8px;">AI INSIGHTS</div>
-            <div style="color: #333; font-size: 14px; line-height: 1.6;">The net worth increased by $6,205 (0.46%) to $1,359,205, primarily driven by gains in the Retirement Account - 401k - 9999 (+$2,400 or 1.19%) and Investment Account - Stocks - 1234 (+$1,575 or 1.43%), alongside modest boosts from the Checking Account (+$500 or 3.33%) and Investment Account - Bonds - 5678 (+$375 or 0.49%), which offset a sharp $3,125 (12.5%) decline in the Crypto Wallet; debt paydowns on the Mortgage - Primary Residence (-$50) and Auto Loan - Vehicle 1 (-$30) provided minor support. This movement underscores the portfolio's heavy 60.42% real estate allocation, which remained flat and buffered overall volatility, but highlights concentration risk in this illiquid asset class amid equity gains that align with the 22.39% stocks exposure, while the tiny 1.55% crypto slice amplified relative pain from market swings. Watch the crypto divergence from rising equities, as its outsized percentage drop signals potential broader volatility spillover if Bitcoin or altcoins weaken further. Consider reviewing the crypto wallet for transaction errors or exposure details to assess if trimming this high-volatility outlier is warranted.</div>
+            <div style="color: #333; font-size: 14px; line-height: 1.6;">The portfolio's net worth rose $6,205 (0.46%) to $1,359,205, primarily driven by gains in the Retirement Account - 401k (+$2,400, 1.19%) and Investment Account - Stocks (+$1,575, 1.43%), which offset a sharp $3,125 (12.5%) decline in the Crypto Wallet; minor boosts from Checking Account inflows (+$500) and debt reductions (Mortgage -$50, Auto Loan -$30) contributed the rest, while the dominant Real Estate allocation (60.42%) remained flat. This underscores concentration risk in Real Estate, which buffers volatility but limits liquidity, while the modest Stocks exposure (22.39%) provided upside amid broader equity gains, highlighting an opportunity to leverage diversified growth assets over volatile Crypto (just 1.55% of portfolio). Watch the Crypto divergence, as its outsized daily drop signals potential broader market turbulence despite low weighting, contrasting steady equity performance. Review Crypto Wallet holdings immediately to assess if the loss stems from specific asset underperformance or external factors warranting a trim.</div>
         </div>
         
 
@@ -45,50 +46,61 @@
             </div>
 
             
-            <div style="margin-top: 20px;">
+            
+            <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
-                    Real Estate
-                    <span style="font-size: 14px; color: #777; font-weight: 500;">
-                        (1 account)
+                <div  style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                    
+                    <span style="flex: 1;">
+                        Real Estate
+                        <span style="font-size: 14px; color: #777; font-weight: 500;">
+                            (1 account)
+                        </span>
                     </span>
-                    <span style="float: right; font-size: 14px;">
+                    <span style="font-size: 14px; white-space: nowrap;">
                         $850,000
                         
                     </span>
                 </div>
 
-                <!-- Section-level grouping within sheet (only if multiple sections) -->
-                
-                    <!-- Single section: skip section header, show accounts directly -->
+                <!-- Sheet content (collapsible in export mode) -->
+                <div id="sheet-1" class="collapsible-content">
+                    <!-- Section-level grouping within sheet (only if multiple sections) -->
                     
+                        <!-- Single section: skip section header, show accounts directly -->
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 500; color: #333;">Primary Residence</div>
-                                
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 500; color: #333;">Primary Residence</div>
+                                    
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 600; color: #333;">$850,000</div>
+                                    
+                                    
+                                    <div style="font-size: 14px; font-weight: 600; color: #666666;">$0 (0.00%)</div>
+                                    
+                                </div>
                             </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 600; color: #333;">$850,000</div>
-                                
-                                
-                                <div style="font-size: 14px; font-weight: 600; color: #666666;">$0 (0.00%)</div>
-                                
-                            </div>
-                        </div>
+                            
                         
                     
-                
+                </div>
             </div>
             
-            <div style="margin-top: 20px;">
+            
+            <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
-                    Retirement
-                    <span style="font-size: 14px; color: #777; font-weight: 500;">
-                        (1 account)
+                <div  style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                    
+                    <span style="flex: 1;">
+                        Retirement
+                        <span style="font-size: 14px; color: #777; font-weight: 500;">
+                            (1 account)
+                        </span>
                     </span>
-                    <span style="float: right; font-size: 14px;">
+                    <span style="font-size: 14px; white-space: nowrap;">
                         $203,400
                         
                         
@@ -99,39 +111,46 @@
                     </span>
                 </div>
 
-                <!-- Section-level grouping within sheet (only if multiple sections) -->
-                
-                    <!-- Single section: skip section header, show accounts directly -->
+                <!-- Sheet content (collapsible in export mode) -->
+                <div id="sheet-2" class="collapsible-content">
+                    <!-- Section-level grouping within sheet (only if multiple sections) -->
                     
+                        <!-- Single section: skip section header, show accounts directly -->
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 500; color: #333;">Retirement Account - 401k - 9999</div>
-                                
-                                <div style="font-size: 12px; color: #999;">Retirement Firm B</div>
-                                
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 500; color: #333;">Retirement Account - 401k - 9999</div>
+                                    
+                                    <div style="font-size: 12px; color: #999;">Retirement Firm B</div>
+                                    
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 600; color: #333;">$203,400</div>
+                                    
+                                    
+                                    <div style="font-size: 14px; font-weight: 600; color: #00b383;">↑ $2,400 (+1.19%)</div>
+                                    
+                                </div>
                             </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 600; color: #333;">$203,400</div>
-                                
-                                
-                                <div style="font-size: 14px; font-weight: 600; color: #00b383;">↑ $2,400 (+1.19%)</div>
-                                
-                            </div>
-                        </div>
+                            
                         
                     
-                
+                </div>
             </div>
             
-            <div style="margin-top: 20px;">
+            
+            <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
-                    Investments
-                    <span style="font-size: 14px; color: #777; font-weight: 500;">
-                        (2 accounts)
+                <div  style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                    
+                    <span style="flex: 1;">
+                        Investments
+                        <span style="font-size: 14px; color: #777; font-weight: 500;">
+                            (2 accounts)
+                        </span>
                     </span>
-                    <span style="float: right; font-size: 14px;">
+                    <span style="font-size: 14px; white-space: nowrap;">
                         $188,950
                         
                         
@@ -142,146 +161,174 @@
                     </span>
                 </div>
 
-                <!-- Section-level grouping within sheet (only if multiple sections) -->
-                
+                <!-- Sheet content (collapsible in export mode) -->
+                <div id="sheet-3" class="collapsible-content">
+                    <!-- Section-level grouping within sheet (only if multiple sections) -->
                     
-                    
-                    <div style="margin-left: 15px; margin-top: 15px;">
-                        <div style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
-                            Taxable
-                            <span style="font-size: 13px; color: #888; font-weight: 500;">
-                                (1 account)
-                            </span>
-                            <span style="float: right; font-size: 13px;">
-                                $111,575
+                        
+                        
+                        
+                        <div style="margin-left: 15px; margin-top: 15px;">
+                            <div  style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
                                 
-                                
-                                <span style="color: #00b383; margin-left: 6px; font-size: 12px;">
-                                    ↑ $1,575 (+1.43%)
+                                <span style="flex: 1;">
+                                    Taxable
+                                    <span style="font-size: 13px; color: #888; font-weight: 500;">
+                                        (1 account)
+                                    </span>
                                 </span>
-                                
-                            </span>
-                        </div>
-
-                        <!-- Individual accounts within section -->
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 500; color: #333; font-size: 13px;">Investment Account - Stocks - 1234</div>
-                                
-                                <div style="font-size: 11px; color: #999;">Investment Firm A</div>
-                                
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 600; color: #333; font-size: 13px;">$111,575</div>
-                                
-                                
-                                <div style="font-size: 12px; font-weight: 600; color: #00b383;">↑ $1,575 (+1.43%)</div>
-                                
-                            </div>
-                        </div>
-                        
-                    </div>
-                    
-                    
-                    <div style="margin-left: 15px; margin-top: 15px;">
-                        <div style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
-                            Tax Deferred
-                            <span style="font-size: 13px; color: #888; font-weight: 500;">
-                                (1 account)
-                            </span>
-                            <span style="float: right; font-size: 13px;">
-                                $77,375
-                                
-                                
-                                <span style="color: #00b383; margin-left: 6px; font-size: 12px;">
-                                    ↑ $375 (+0.49%)
+                                <span style="font-size: 13px; white-space: nowrap;">
+                                    $111,575
+                                    
+                                    
+                                    <span style="color: #00b383; margin-left: 6px; font-size: 12px;">
+                                        ↑ $1,575 (+1.43%)
+                                    </span>
+                                    
                                 </span>
-                                
-                            </span>
-                        </div>
+                            </div>
 
-                        <!-- Individual accounts within section -->
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 500; color: #333; font-size: 13px;">Investment Account - Bonds - 5678</div>
+                            <!-- Section content (collapsible in export mode) -->
+                            <div id="section-3_1" class="collapsible-content">
+                                <!-- Individual accounts within section -->
                                 
-                                <div style="font-size: 11px; color: #999;">Investment Firm A</div>
-                                
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 600; color: #333; font-size: 13px;">$77,375</div>
-                                
-                                
-                                <div style="font-size: 12px; font-weight: 600; color: #00b383;">↑ $375 (+0.49%)</div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 500; color: #333; font-size: 13px;">Investment Account - Stocks - 1234</div>
+                                        
+                                        <div style="font-size: 11px; color: #999;">Investment Firm A</div>
+                                        
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-weight: 600; color: #333; font-size: 13px;">$111,575</div>
+                                        
+                                        
+                                        <div style="font-size: 12px; font-weight: 600; color: #00b383;">↑ $1,575 (+1.43%)</div>
+                                        
+                                    </div>
+                                </div>
                                 
                             </div>
                         </div>
                         
-                    </div>
+                        
+                        
+                        <div style="margin-left: 15px; margin-top: 15px;">
+                            <div  style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
+                                
+                                <span style="flex: 1;">
+                                    Tax Deferred
+                                    <span style="font-size: 13px; color: #888; font-weight: 500;">
+                                        (1 account)
+                                    </span>
+                                </span>
+                                <span style="font-size: 13px; white-space: nowrap;">
+                                    $77,375
+                                    
+                                    
+                                    <span style="color: #00b383; margin-left: 6px; font-size: 12px;">
+                                        ↑ $375 (+0.49%)
+                                    </span>
+                                    
+                                </span>
+                            </div>
+
+                            <!-- Section content (collapsible in export mode) -->
+                            <div id="section-3_2" class="collapsible-content">
+                                <!-- Individual accounts within section -->
+                                
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 500; color: #333; font-size: 13px;">Investment Account - Bonds - 5678</div>
+                                        
+                                        <div style="font-size: 11px; color: #999;">Investment Firm A</div>
+                                        
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-weight: 600; color: #333; font-size: 13px;">$77,375</div>
+                                        
+                                        
+                                        <div style="font-size: 12px; font-weight: 600; color: #00b383;">↑ $375 (+0.49%)</div>
+                                        
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
                     
-                
+                </div>
             </div>
             
-            <div style="margin-top: 20px;">
+            
+            <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
-                    Vehicles
-                    <span style="font-size: 14px; color: #777; font-weight: 500;">
-                        (2 accounts)
+                <div  style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                    
+                    <span style="flex: 1;">
+                        Vehicles
+                        <span style="font-size: 14px; color: #777; font-weight: 500;">
+                            (2 accounts)
+                        </span>
                     </span>
-                    <span style="float: right; font-size: 14px;">
+                    <span style="font-size: 14px; white-space: nowrap;">
                         $77,000
                         
                     </span>
                 </div>
 
-                <!-- Section-level grouping within sheet (only if multiple sections) -->
-                
-                    <!-- Single section: skip section header, show accounts directly -->
+                <!-- Sheet content (collapsible in export mode) -->
+                <div id="sheet-4" class="collapsible-content">
+                    <!-- Section-level grouping within sheet (only if multiple sections) -->
                     
+                        <!-- Single section: skip section header, show accounts directly -->
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 500; color: #333;">Vehicle 1</div>
-                                
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 500; color: #333;">Vehicle 1</div>
+                                    
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 600; color: #333;">$45,000</div>
+                                    
+                                    
+                                    <div style="font-size: 14px; font-weight: 600; color: #666666;">$0 (0.00%)</div>
+                                    
+                                </div>
                             </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 600; color: #333;">$45,000</div>
-                                
-                                
-                                <div style="font-size: 14px; font-weight: 600; color: #666666;">$0 (0.00%)</div>
-                                
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 500; color: #333;">Vehicle 2</div>
+                                    
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 600; color: #333;">$32,000</div>
+                                    
+                                    
+                                    <div style="font-size: 14px; font-weight: 600; color: #666666;">$0 (0.00%)</div>
+                                    
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 500; color: #333;">Vehicle 2</div>
-                                
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 600; color: #333;">$32,000</div>
-                                
-                                
-                                <div style="font-size: 14px; font-weight: 600; color: #666666;">$0 (0.00%)</div>
-                                
-                            </div>
-                        </div>
+                            
                         
                     
-                
+                </div>
             </div>
             
-            <div style="margin-top: 20px;">
+            
+            <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
-                    Banks
-                    <span style="font-size: 14px; color: #777; font-weight: 500;">
-                        (2 accounts)
+                <div  style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                    
+                    <span style="flex: 1;">
+                        Banks
+                        <span style="font-size: 14px; color: #777; font-weight: 500;">
+                            (2 accounts)
+                        </span>
                     </span>
-                    <span style="float: right; font-size: 14px;">
+                    <span style="font-size: 14px; white-space: nowrap;">
                         $65,550
                         
                         
@@ -292,96 +339,117 @@
                     </span>
                 </div>
 
-                <!-- Section-level grouping within sheet (only if multiple sections) -->
-                
+                <!-- Sheet content (collapsible in export mode) -->
+                <div id="sheet-5" class="collapsible-content">
+                    <!-- Section-level grouping within sheet (only if multiple sections) -->
                     
-                    
-                    <div style="margin-left: 15px; margin-top: 15px;">
-                        <div style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
-                            Checking
-                            <span style="font-size: 13px; color: #888; font-weight: 500;">
-                                (1 account)
-                            </span>
-                            <span style="float: right; font-size: 13px;">
-                                $15,500
+                        
+                        
+                        
+                        <div style="margin-left: 15px; margin-top: 15px;">
+                            <div  style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
                                 
-                                
-                                <span style="color: #00b383; margin-left: 6px; font-size: 12px;">
-                                    ↑ $500 (+3.33%)
+                                <span style="flex: 1;">
+                                    Checking
+                                    <span style="font-size: 13px; color: #888; font-weight: 500;">
+                                        (1 account)
+                                    </span>
                                 </span>
-                                
-                            </span>
-                        </div>
-
-                        <!-- Individual accounts within section -->
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 500; color: #333; font-size: 13px;">Checking Account</div>
-                                
-                                <div style="font-size: 11px; color: #999;">First National Bank</div>
-                                
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 600; color: #333; font-size: 13px;">$15,500</div>
-                                
-                                
-                                <div style="font-size: 12px; font-weight: 600; color: #00b383;">↑ $500 (+3.33%)</div>
-                                
-                            </div>
-                        </div>
-                        
-                    </div>
-                    
-                    
-                    <div style="margin-left: 15px; margin-top: 15px;">
-                        <div style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
-                            Savings
-                            <span style="font-size: 13px; color: #888; font-weight: 500;">
-                                (1 account)
-                            </span>
-                            <span style="float: right; font-size: 13px;">
-                                $50,050
-                                
-                                
-                                <span style="color: #00b383; margin-left: 6px; font-size: 12px;">
-                                    ↑ $50 (+0.10%)
+                                <span style="font-size: 13px; white-space: nowrap;">
+                                    $15,500
+                                    
+                                    
+                                    <span style="color: #00b383; margin-left: 6px; font-size: 12px;">
+                                        ↑ $500 (+3.33%)
+                                    </span>
+                                    
                                 </span>
-                                
-                            </span>
-                        </div>
+                            </div>
 
-                        <!-- Individual accounts within section -->
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 500; color: #333; font-size: 13px;">Savings Account</div>
+                            <!-- Section content (collapsible in export mode) -->
+                            <div id="section-5_1" class="collapsible-content">
+                                <!-- Individual accounts within section -->
                                 
-                                <div style="font-size: 11px; color: #999;">First National Bank</div>
-                                
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 600; color: #333; font-size: 13px;">$50,050</div>
-                                
-                                
-                                <div style="font-size: 12px; font-weight: 600; color: #00b383;">↑ $50 (+0.10%)</div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 500; color: #333; font-size: 13px;">Checking Account</div>
+                                        
+                                        <div style="font-size: 11px; color: #999;">First National Bank</div>
+                                        
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-weight: 600; color: #333; font-size: 13px;">$15,500</div>
+                                        
+                                        
+                                        <div style="font-size: 12px; font-weight: 600; color: #00b383;">↑ $500 (+3.33%)</div>
+                                        
+                                    </div>
+                                </div>
                                 
                             </div>
                         </div>
                         
-                    </div>
+                        
+                        
+                        <div style="margin-left: 15px; margin-top: 15px;">
+                            <div  style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
+                                
+                                <span style="flex: 1;">
+                                    Savings
+                                    <span style="font-size: 13px; color: #888; font-weight: 500;">
+                                        (1 account)
+                                    </span>
+                                </span>
+                                <span style="font-size: 13px; white-space: nowrap;">
+                                    $50,050
+                                    
+                                    
+                                    <span style="color: #00b383; margin-left: 6px; font-size: 12px;">
+                                        ↑ $50 (+0.10%)
+                                    </span>
+                                    
+                                </span>
+                            </div>
+
+                            <!-- Section content (collapsible in export mode) -->
+                            <div id="section-5_2" class="collapsible-content">
+                                <!-- Individual accounts within section -->
+                                
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 500; color: #333; font-size: 13px;">Savings Account</div>
+                                        
+                                        <div style="font-size: 11px; color: #999;">First National Bank</div>
+                                        
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-weight: 600; color: #333; font-size: 13px;">$50,050</div>
+                                        
+                                        
+                                        <div style="font-size: 12px; font-weight: 600; color: #00b383;">↑ $50 (+0.10%)</div>
+                                        
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        
                     
-                
+                </div>
             </div>
             
-            <div style="margin-top: 20px;">
+            
+            <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
-                    Crypto
-                    <span style="font-size: 14px; color: #777; font-weight: 500;">
-                        (1 account)
+                <div  style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                    
+                    <span style="flex: 1;">
+                        Crypto
+                        <span style="font-size: 14px; color: #777; font-weight: 500;">
+                            (1 account)
+                        </span>
                     </span>
-                    <span style="float: right; font-size: 14px;">
+                    <span style="font-size: 14px; white-space: nowrap;">
                         $21,875
                         
                         
@@ -392,29 +460,32 @@
                     </span>
                 </div>
 
-                <!-- Section-level grouping within sheet (only if multiple sections) -->
-                
-                    <!-- Single section: skip section header, show accounts directly -->
+                <!-- Sheet content (collapsible in export mode) -->
+                <div id="sheet-6" class="collapsible-content">
+                    <!-- Section-level grouping within sheet (only if multiple sections) -->
                     
+                        <!-- Single section: skip section header, show accounts directly -->
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 500; color: #333;">Crypto Wallet</div>
-                                
-                                <div style="font-size: 12px; color: #999;">Crypto Exchange</div>
-                                
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 500; color: #333;">Crypto Wallet</div>
+                                    
+                                    <div style="font-size: 12px; color: #999;">Crypto Exchange</div>
+                                    
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 600; color: #333;">$21,875</div>
+                                    
+                                    
+                                    <div style="font-size: 14px; font-weight: 600; color: #e63946;">↓ $3,125 (-12.50%)</div>
+                                    
+                                </div>
                             </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 600; color: #333;">$21,875</div>
-                                
-                                
-                                <div style="font-size: 14px; font-weight: 600; color: #e63946;">↓ $3,125 (-12.50%)</div>
-                                
-                            </div>
-                        </div>
+                            
                         
                     
-                
+                </div>
             </div>
             
         </div>
@@ -482,5 +553,7 @@
             <a href="https://github.com/the-mace/kubera-reporting" style="color: #0066cc; text-decoration: none;">kubera-reporting on GitHub</a>
         </div>
     </div>
+
+    
 </body>
 </html>

@@ -711,13 +711,14 @@ def export(
             if ai_summary:
                 console.print("[green]✓[/green] AI insights generated")
 
-        # Generate HTML report
+        # Generate HTML report with collapse/expand functionality
         html_report = reporter.generate_html_report(
             report_data,
             report_type=selected_report_type,
             ai_summary=ai_summary,
             recipient_name=name,
             hide_amounts=hide_amounts,
+            is_export=True,
         )
 
         # Determine output file path

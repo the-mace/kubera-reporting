@@ -458,6 +458,7 @@ Portfolio Data:
         ai_summary: str | None = None,
         recipient_name: str | None = None,
         hide_amounts: bool = False,
+        is_export: bool = False,
     ) -> str:
         """Generate HTML email report with embedded base64 charts for better forwarding.
 
@@ -468,6 +469,7 @@ Portfolio Data:
             ai_summary: Optional AI-generated summary
             recipient_name: Optional name for greeting (default: "Portfolio Report")
             hide_amounts: If True, mask dollar amounts (show "$XX" instead)
+            is_export: If True, add collapse/expand functionality for local viewing (default: False)
 
         Returns:
             HTML report string with inline styles and base64-embedded charts
@@ -637,6 +639,7 @@ Portfolio Data:
                 format_money=format_money_wrapper,
                 format_net_worth=format_net_worth_wrapper,
                 format_change=format_change_wrapper,
+                is_export=is_export,
             )
         except Exception as e:
             raise ReportGenerationError(f"Failed to generate HTML report: {e}") from e
@@ -746,6 +749,39 @@ Portfolio Data:
 <html>
 <head>
     <meta charset="UTF-8">
+    {% if is_export %}
+    <style>
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+        }
+        .collapsible-header:hover {
+            background-color: #f5f5f5;
+        }
+        .toggle-indicator {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            margin-right: 4px;
+            font-size: 12px;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        .collapsed .toggle-indicator {
+            transform: rotate(-90deg);
+        }
+        .collapsible-content {
+            display: none;
+        }
+        .collapsible-content.expanded {
+            display: block;
+        }
+    </style>
+    {% endif %}
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; \
 margin: 0; padding: 20px; background-color: #f5f5f5;">
@@ -815,16 +851,22 @@ space-between; align-items: center;">
             </div>
 
             {% for sheet_name, sheet_sections in assets_by_sheet.items() %}
-            <div style="margin-top: 20px;">
+            {% set sheet_id = loop.index %}
+            <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div style="font-size: 16px; font-weight: 600; color: #555; \
-margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
-                    {{ sheet_name }}
-                    <span style="font-size: 14px; color: #777; font-weight: 500;">
-                        ({{ sheet_totals[sheet_name].count }} account\
+                <div {% if is_export %}class="collapsible-header collapsed" \
+onclick="toggleSheet({{ sheet_id }})"{% endif %} \
+style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; \
+padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                    {% if is_export %}<span class="toggle-indicator">▼</span>{% endif %}
+                    <span style="flex: 1;">
+                        {{ sheet_name }}
+                        <span style="font-size: 14px; color: #777; font-weight: 500;">
+                            ({{ sheet_totals[sheet_name].count }} account\
 {{ 's' if sheet_totals[sheet_name].count != 1 else '' }})
+                        </span>
                     </span>
-                    <span style="float: right; font-size: 14px;">
+                    <span style="font-size: 14px; white-space: nowrap;">
                         {{ format_money({'amount': sheet_totals[sheet_name].total_value, \
 'currency': current.currency}) }}
                         {% if previous and sheet_totals[sheet_name].total_change %}
@@ -840,86 +882,102 @@ font-size: 13px;">
                     </span>
                 </div>
 
-                <!-- Section-level grouping within sheet (only if multiple sections) -->
-                {% if sheet_sections|length > 1 %}
-                    {% for section_name, accounts in sheet_sections.items() %}
-                    {% set section = section_totals[sheet_name][section_name] %}
-                    <div style="margin-left: 15px; margin-top: 15px;">
-                        <div style="font-size: 14px; font-weight: 600; color: #666; \
-margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
-                            {{ section_name }}
-                            <span style="font-size: 13px; color: #888; font-weight: 500;">
-                                ({{ section.count }} account{{ 's' if section.count != 1 else '' }})
-                            </span>
-                            <span style="float: right; font-size: 13px;">
-                                {{ format_money({'amount': section.total_value, \
-'currency': current.currency}) }}
-                                {% if previous and section.total_change %}
-                                {% set section_change_text, section_change_color = format_change(
-                                    {'amount': section.total_change, 'currency': current.currency},
-                                    section.change_percent) %}
-                                <span style="color: {{ section_change_color }}; \
-margin-left: 6px; font-size: 12px;">
-                                    {{ section_change_text }}
+                <!-- Sheet content (collapsible in export mode) -->
+                <div id="sheet-{{ sheet_id }}" class="collapsible-content">
+                    <!-- Section-level grouping within sheet (only if multiple sections) -->
+                    {% if sheet_sections|length > 1 %}
+                        {% for section_name, accounts in sheet_sections.items() %}
+                        {% set section_id = sheet_id ~ '_' ~ loop.index %}
+                        {% set section = section_totals[sheet_name][section_name] %}
+                        <div style="margin-left: 15px; margin-top: 15px;">
+                            <div {% if is_export %}class="collapsible-header collapsed" \
+onclick="toggleSection('{{ section_id }}')"{% endif %} \
+style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; \
+padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
+                                {% if is_export %}<span class="toggle-indicator">▼</span>\
+{% endif %}
+                                <span style="flex: 1;">
+                                    {{ section_name }}
+                                    <span style="font-size: 13px; color: #888; font-weight: 500;">
+                                        ({{ section.count }} account\
+{{ 's' if section.count != 1 else '' }})
+                                    </span>
                                 </span>
-                                {% endif %}
-                            </span>
-                        </div>
+                                <span style="font-size: 13px; white-space: nowrap;">
+                                    {{ format_money({'amount': section.total_value, \
+'currency': current.currency}) }}
+                                    {% if previous and section.total_change %}
+                                    {% set section_change_text, section_change_color = \
+format_change(
+                                        {'amount': section.total_change, \
+'currency': current.currency},
+                                        section.change_percent) %}
+                                    <span style="color: {{ section_change_color }}; \
+margin-left: 6px; font-size: 12px;">
+                                        {{ section_change_text }}
+                                    </span>
+                                    {% endif %}
+                                </span>
+                            </div>
 
-                        <!-- Individual accounts within section -->
-                        {% for account in accounts %}
-                        <div style="display: flex; justify-content: space-between; \
+                            <!-- Section content (collapsible in export mode) -->
+                            <div id="section-{{ section_id }}" class="collapsible-content">
+                                <!-- Individual accounts within section -->
+                                {% for account in accounts %}
+                                <div style="display: flex; justify-content: space-between; \
 align-items: center; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 500; color: #333; font-size: 13px;">\
-{{ account.name }}</div>
-                                {% if account.institution %}
-                                <div style="font-size: 11px; color: #999;">\
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 500; color: #333; \
+font-size: 13px;">{{ account.name }}</div>
+                                        {% if account.institution %}
+                                        <div style="font-size: 11px; color: #999;">\
 {{ account.institution }}</div>
-                                {% endif %}
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 600; color: #333; font-size: 13px;">\
-{{ format_money(account.current_value) }}</div>
-                                {% if previous %}
-                                {% set change_text, change_color = format_change(
-                                    account.change, account.change_percent) %}
-                                <div style="font-size: 12px; font-weight: 600; \
+                                        {% endif %}
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-weight: 600; color: #333; \
+font-size: 13px;">{{ format_money(account.current_value) }}</div>
+                                        {% if previous %}
+                                        {% set change_text, change_color = format_change(
+                                            account.change, account.change_percent) %}
+                                        <div style="font-size: 12px; font-weight: 600; \
 color: {{ change_color }};">{{ change_text }}</div>
-                                {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
                             </div>
                         </div>
                         {% endfor %}
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <!-- Single section: skip section header, show accounts directly -->
-                    {% for section_name, accounts in sheet_sections.items() %}
-                        {% for account in accounts %}
-                        <div style="display: flex; justify-content: space-between; \
+                    {% else %}
+                        <!-- Single section: skip section header, show accounts directly -->
+                        {% for section_name, accounts in sheet_sections.items() %}
+                            {% for account in accounts %}
+                            <div style="display: flex; justify-content: space-between; \
 align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 500; color: #333;">\
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 500; color: #333;">\
 {{ account.name }}</div>
-                                {% if account.institution %}
-                                <div style="font-size: 12px; color: #999;">\
+                                    {% if account.institution %}
+                                    <div style="font-size: 12px; color: #999;">\
 {{ account.institution }}</div>
-                                {% endif %}
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: 600; color: #333;">\
+                                    {% endif %}
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 600; color: #333;">\
 {{ format_money(account.current_value) }}</div>
-                                {% if previous %}
-                                {% set change_text, change_color = format_change(
-                                    account.change, account.change_percent) %}
-                                <div style="font-size: 14px; font-weight: 600; \
+                                    {% if previous %}
+                                    {% set change_text, change_color = format_change(
+                                        account.change, account.change_percent) %}
+                                    <div style="font-size: 14px; font-weight: 600; \
 color: {{ change_color }};">{{ change_text }}</div>
-                                {% endif %}
+                                    {% endif %}
+                                </div>
                             </div>
-                        </div>
+                            {% endfor %}
                         {% endfor %}
-                    {% endfor %}
-                {% endif %}
+                    {% endif %}
+                </div>
             </div>
             {% endfor %}
         </div>
@@ -984,5 +1042,35 @@ color: #999; font-size: 12px; text-align: center;">
 style="color: #0066cc; text-decoration: none;">kubera-reporting on GitHub</a>
         </div>
     </div>
+
+    {% if is_export %}
+    <script>
+        function toggleSheet(sheetId) {
+            const header = event.currentTarget;
+            const content = document.getElementById('sheet-' + sheetId);
+
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                header.classList.add('collapsed');
+            } else {
+                content.classList.add('expanded');
+                header.classList.remove('collapsed');
+            }
+        }
+
+        function toggleSection(sectionId) {
+            const header = event.currentTarget;
+            const content = document.getElementById('section-' + sectionId);
+
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                header.classList.add('collapsed');
+            } else {
+                content.classList.add('expanded');
+                header.classList.remove('collapsed');
+            }
+        }
+    </script>
+    {% endif %}
 </body>
 </html>"""
