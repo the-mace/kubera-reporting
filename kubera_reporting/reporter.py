@@ -46,9 +46,9 @@ class PortfolioReporter:
             acc_id = account["id"]
 
             # Check if this is a holding (should be skipped)
-            is_holding = "_" in acc_id and (
-                "isin-" in acc_id.lower() or "cusip-" in acc_id.lower() or acc_id.endswith("_0")
-            )
+            # All holdings have underscore in ID (parent_child pattern)
+            # Parent accounts are pure UUIDs without underscores
+            is_holding = "_" in acc_id
 
             # Check if account has zero value (should be skipped)
             has_zero_value = account["value"]["amount"] == 0
