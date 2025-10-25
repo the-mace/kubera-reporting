@@ -23,6 +23,13 @@ class MoneyValue(TypedDict):
     currency: str
 
 
+class Geography(TypedDict):
+    """Geographic information for an asset."""
+
+    country: str
+    region: str
+
+
 class AccountSnapshot(TypedDict):
     """Snapshot of a single account."""
 
@@ -33,6 +40,10 @@ class AccountSnapshot(TypedDict):
     category: Literal["asset", "debt"]
     sheet_name: str
     section_name: NotRequired[str | None]  # Optional: section within a sheet
+    sub_type: NotRequired[str | None]  # Optional: Kubera subType (stock, bond, cash, etc.)
+    asset_class: NotRequired[str | None]  # Optional: Kubera assetClass
+    account_type: NotRequired[str | None]  # Optional: Kubera type (bank, investment, etc.)
+    geography: NotRequired[Geography | None]  # Optional: Geographic allocation (country, region)
 
 
 class PortfolioSnapshot(TypedDict):
@@ -57,6 +68,10 @@ class AccountDelta(TypedDict):
     category: Literal["asset", "debt"]
     sheet_name: str
     section_name: NotRequired[str | None]  # Optional: section within a sheet
+    sub_type: NotRequired[str | None]  # Optional: Kubera subType (stock, bond, cash, etc.)
+    asset_class: NotRequired[str | None]  # Optional: Kubera assetClass
+    account_type: NotRequired[str | None]  # Optional: Kubera type (bank, investment, etc.)
+    geography: NotRequired[Geography | None]  # Optional: Geographic allocation (country, region)
     current_value: MoneyValue
     previous_value: MoneyValue
     change: MoneyValue
@@ -67,6 +82,7 @@ class ReportData(TypedDict):
     """Data for generating a report."""
 
     current: PortfolioSnapshot
+    current_unaggregated: NotRequired[PortfolioSnapshot]  # Original snapshot with all holdings
     previous: PortfolioSnapshot | None
     net_worth_change: MoneyValue | None
     net_worth_change_percent: float | None

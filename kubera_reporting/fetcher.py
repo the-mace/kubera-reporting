@@ -86,6 +86,10 @@ class KuberaFetcher:
                         "category": "asset",
                         "sheet_name": asset["sheetName"],
                         "section_name": asset.get("sectionName"),
+                        "sub_type": asset.get("subType"),
+                        "asset_class": asset.get("assetClass"),
+                        "account_type": asset.get("type"),
+                        "geography": asset.get("geography"),
                     }
                 )
 
@@ -100,6 +104,10 @@ class KuberaFetcher:
                         "category": "debt",
                         "sheet_name": debt["sheetName"],
                         "section_name": debt.get("sectionName"),
+                        "sub_type": debt.get("subType"),
+                        "asset_class": debt.get("assetClass"),
+                        "account_type": debt.get("type"),
+                        "geography": debt.get("geography"),
                     }
                 )
 

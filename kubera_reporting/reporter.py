@@ -27,7 +27,7 @@ class PortfolioReporter:
     def _aggregate_holdings_to_accounts(self, snapshot: PortfolioSnapshot) -> PortfolioSnapshot:
         """Filter out individual holdings and zero-value accounts, keeping only parent accounts.
 
-        Raw API data contains both parent accounts (e.g., "Kelli Trust - Bonds - 2172")
+        Raw API data contains both parent accounts (e.g., "Account Name - Bonds - 1234")
         and their individual holdings (e.g., 500 stocks with IDs like {uuid}_isin-xxx).
 
         We want to show only the parent accounts with their aggregate values,
@@ -75,7 +75,10 @@ class PortfolioReporter:
         Returns:
             Report data with calculated deltas
         """
-        # Aggregate holdings into parent accounts (handles old cached data)
+        # Save original snapshot for allocation (needs child holdings with detailed subTypes)
+        current_original = current
+
+        # Aggregate holdings into parent accounts for delta calculations
         current = self._aggregate_holdings_to_accounts(current)
         if previous:
             previous = self._aggregate_holdings_to_accounts(previous)
@@ -119,6 +122,10 @@ class PortfolioReporter:
                     "category": account["category"],
                     "sheet_name": account["sheet_name"],
                     "section_name": account.get("section_name"),
+                    "sub_type": account.get("sub_type"),
+                    "asset_class": account.get("asset_class"),
+                    "account_type": account.get("account_type"),
+                    "geography": account.get("geography"),
                     "current_value": account["value"],
                     "previous_value": prev_account["value"],
                     "change": {"amount": change_amount, "currency": current["currency"]},
@@ -133,6 +140,10 @@ class PortfolioReporter:
                     "category": account["category"],
                     "sheet_name": account["sheet_name"],
                     "section_name": account.get("section_name"),
+                    "sub_type": account.get("sub_type"),
+                    "asset_class": account.get("asset_class"),
+                    "account_type": account.get("account_type"),
+                    "geography": account.get("geography"),
                     "current_value": account["value"],
                     "previous_value": {"amount": 0.0, "currency": current["currency"]},
                     "change": account["value"],
@@ -150,6 +161,7 @@ class PortfolioReporter:
 
         return {
             "current": current,
+            "current_unaggregated": current_original,
             "previous": previous,
             "net_worth_change": net_worth_change,
             "net_worth_change_percent": net_worth_change_percent,
@@ -228,7 +240,10 @@ class PortfolioReporter:
         return buf.read()
 
     def calculate_asset_allocation(self, snapshot: PortfolioSnapshot) -> dict[str, float]:
-        """Calculate asset allocation by category.
+        """Calculate asset allocation by category using subType metadata from Kubera API.
+
+        Uses structured metadata (subType, assetClass) instead of parsing account names.
+        Only counts leaf nodes (individual holdings) to avoid double-counting parent accounts.
 
         Args:
             snapshot: Portfolio snapshot
@@ -245,31 +260,134 @@ class PortfolioReporter:
             "Other": 0.0,
         }
 
+        # Map Kubera subTypes to our categories
+        subtype_to_category = {
+            "stock": "Stocks",
+            "etf": "Stocks",
+            "bond": "Bonds",
+            "cash": "Cash",
+            "crypto": "Crypto",
+            "cryptocurrency": "Crypto",
+            "real estate": "Real Estate",
+            "property": "Real Estate",
+            "primary residence": "Real Estate",
+            "investment property": "Real Estate",
+        }
+
         for account in snapshot["accounts"]:
             if account["category"] != "asset":
                 continue
 
+            # Skip parent accounts with children - only count leaf holdings
+            # Parent accounts have aggregate values; their children have the actual holdings
+            # Both parent and children are in the accounts list (from API), so we filter parents
+            account_id = account["id"]
+            if "_" not in account_id:
+                # This is a parent account (pure UUID, no underscore)
+                # Check if there are any child holdings
+                has_children = any(
+                    a["id"].startswith(f"{account_id}_")
+                    for a in snapshot["accounts"]
+                    if a["category"] == "asset"
+                )
+                # Skip parent accounts that have children (to avoid double-counting)
+                # Keep standalone accounts (no children)
+                if has_children:
+                    continue
+
             amount = account["value"]["amount"]
+
+            # Skip zero-value accounts
+            if amount == 0:
+                continue
+
+            # Get metadata fields (may not exist in old snapshots)
+            sub_type_raw = account.get("sub_type")
+            sub_type = sub_type_raw.lower() if sub_type_raw else ""
+            asset_class_raw = account.get("asset_class")
+            asset_class = asset_class_raw.lower() if asset_class_raw else ""
+            account_type_raw = account.get("account_type")
+            account_type = account_type_raw.lower() if account_type_raw else ""
             sheet = account["sheet_name"].lower()
             name = account["name"].lower()
 
-            # Categorize based on sheet name and account name
-            if "crypto" in sheet or "crypto" in name:
-                categories["Crypto"] += amount
-            elif "bond" in name or "bond" in sheet:
-                categories["Bonds"] += amount
-            elif "real estate" in sheet or "property" in sheet:
-                categories["Real Estate"] += amount
-            elif "bank" in sheet or "cash" in sheet or "checking" in name or "savings" in name:
-                categories["Cash"] += amount
-            elif any(
-                keyword in sheet
-                for keyword in ["investment", "brokerage", "retirement", "ira", "401k"]
-            ):
-                # Assume retirement/investment accounts are primarily stocks
-                categories["Stocks"] += amount
-            else:
-                categories["Other"] += amount
+            category = None
+
+            # Try subType first (most reliable)
+            if sub_type in subtype_to_category:
+                category = subtype_to_category[sub_type]
+
+            # Special handling for mutual funds - check name to distinguish bond vs stock funds
+            if sub_type == "mutual fund" or asset_class == "fund":
+                bond_keywords = [
+                    "bond",
+                    "fixed income",
+                    "yield",
+                    "yld",  # Abbreviated yield
+                    "floating rate",
+                    "floating-rate",
+                    "high income",
+                    "high-income",
+                    "high-inc",
+                    "income fund",
+                    "income builder",
+                    "mortgage",
+                    "treasury",
+                    "municipal",
+                    "corporate debt",
+                    "balanced income",  # Balanced funds with "income" are typically bond-heavy
+                ]
+                if any(kw in name for kw in bond_keywords):
+                    category = "Bonds"
+                else:
+                    category = "Stocks"  # Default funds to stocks
+
+            # Check assetClass for direct mappings (if not already categorized)
+            if category is None and asset_class in subtype_to_category:
+                category = subtype_to_category[asset_class]
+
+            # Check assetClass for stock/crypto (when subType is generic)
+            if category is None:
+                if asset_class == "stock":
+                    category = "Stocks"
+                elif asset_class == "crypto":
+                    category = "Crypto"
+
+            # Fallback: check sheet name for crypto or real estate (for manually entered assets)
+            if category is None:
+                if "crypto" in sheet:
+                    category = "Crypto"
+                elif "real estate" in sheet or account_type == "property":
+                    category = "Real Estate"
+
+            # Last resort: parse names (backward compatibility for old snapshots without subType)
+            if category is None:
+                if "crypto" in name:
+                    category = "Crypto"
+                elif "bond" in name:
+                    category = "Bonds"
+                elif "real estate" in sheet or "property" in sheet:
+                    category = "Real Estate"
+                elif "bank" in sheet or "cash" in name or "checking" in name or "savings" in name:
+                    category = "Cash"
+                else:
+                    # Check for investment keywords
+                    investment_keywords = [
+                        "investment",
+                        "brokerage",
+                        "ira",
+                        "401k",
+                        "stock",
+                        "equity",
+                    ]
+                    if any(kw in sheet or kw in name for kw in investment_keywords):
+                        category = "Stocks"
+
+            # Default to Other if still not categorized
+            if category is None:
+                category = "Other"
+
+            categories[category] += amount
 
         # Convert to percentages
         total = sum(categories.values())
@@ -334,8 +452,11 @@ class PortfolioReporter:
                 for d in report_data["debt_changes"][:5]
             ]
 
-            # Calculate asset allocation
-            allocation = self.calculate_asset_allocation(report_data["current"])
+            # Calculate asset allocation (use unaggregated for accurate categorization)
+            snapshot_for_allocation = report_data.get(
+                "current_unaggregated", report_data["current"]
+            )
+            allocation = self.calculate_asset_allocation(snapshot_for_allocation)
 
             # Build comprehensive portfolio data for prompt
             if hide_amounts:
@@ -566,8 +687,11 @@ Portfolio Data:
                 if prev_total_debts != 0:
                     total_debt_change_percent = (total_debt_change / prev_total_debts) * 100
 
-            # Calculate asset allocation
-            allocation = self.calculate_asset_allocation(report_data["current"])
+            # Calculate asset allocation (use unaggregated for accurate categorization)
+            snapshot_for_allocation = report_data.get(
+                "current_unaggregated", report_data["current"]
+            )
+            allocation = self.calculate_asset_allocation(snapshot_for_allocation)
 
             # Always embed chart as base64 data URL for better forwarding compatibility
             chart_src = ""

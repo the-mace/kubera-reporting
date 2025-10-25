@@ -181,7 +181,7 @@ This means you'll have complete historical data for weekly/monthly/quarterly/yea
 
 ### Key Design Decisions
 
-**Holdings Aggregation**: Raw Kubera API returns both parent accounts (e.g., "Kelli Trust - Bonds") and individual holdings (500 stocks with IDs like `{parent_id}_isin-AAPL`). The reporter filters to show only parent accounts with their aggregate values. This logic is in `_aggregate_holdings_to_accounts()`.
+**Holdings Aggregation**: Raw Kubera API returns both parent accounts (e.g., "Account Name - Bonds") and individual holdings (500 stocks with IDs like `{parent_id}_isin-AAPL`). The reporter filters to show only parent accounts with their aggregate values. This logic is in `_aggregate_holdings_to_accounts()`.
 
 **Sheet-Based Allocation**: Asset allocation uses `sheet_name` field from Kubera API (e.g., "Trust", "Retirement", "Bank"). The optional `section_name` field (from API's `sectionName`) provides additional categorization within sheets (e.g., "Taxable", "Tax Deferred", "Section 1") but is not currently used in allocation charts.
 
@@ -381,3 +381,4 @@ GitHub Actions workflow (`.github/workflows/ci.yml`):
 - always write scratch code into the scratch directory. If you are going to write python code for scratch work, make a file in scratch and then execute it.
 - always clean up scratch files in scratch directory before committing code
 - always check for any real data or PII before committing code
+- when debugging/working on the reports and a fix is ready, generate a real html report and open it in the default browser so the user can see the changes
