@@ -593,6 +593,130 @@ def send(
 
 
 @cli.command()
+@click.option(
+    "--date",
+    required=True,
+    help="Date of snapshot to export report for (YYYY-MM-DD)",
+)
+@click.option("--output", "-o", help="Output file path (default: ./report_<date>.html)")
+@click.option(
+    "--name",
+    help="Recipient name for personalization (uses KUBERA_REPORT_NAME env if not set)",
+)
+@click.option("--data-dir", help="Data directory (default: ~/.kubera-reporting/data)")
+@click.option(
+    "--no-ai",
+    is_flag=True,
+    help="Skip AI insights generation",
+)
+@click.option(
+    "--report-type",
+    type=click.Choice(["daily", "weekly", "monthly", "quarterly", "yearly"]),
+    help="Report type to generate (default: auto-detect based on date)",
+)
+def export(
+    date: str,
+    output: str | None,
+    name: str | None,
+    data_dir: str | None,
+    no_ai: bool,
+    report_type: str | None,
+) -> None:
+    """Export HTML report for a specific date to a file."""
+    try:
+        import os
+
+        # Parse the date
+        try:
+            snapshot_date = datetime.strptime(date, "%Y-%m-%d")
+        except ValueError:
+            console.print(
+                "[red]Error:[/red] Invalid date format. Please use YYYY-MM-DD (e.g., 2025-01-15)"
+            )
+            sys.exit(1)
+
+        # Initialize storage
+        storage = SnapshotStorage(data_dir)
+
+        # Load snapshot for the specified date
+        current_snapshot = storage.load_snapshot(snapshot_date)
+        if not current_snapshot:
+            console.print(f"[red]Error:[/red] No snapshot found for {date}")
+            console.print("\nUse 'kubera-report list-snapshots' to see available dates.")
+            sys.exit(1)
+
+        console.print(
+            f"[green]✓[/green] Loaded snapshot for {date} "
+            f"(Net Worth: ${current_snapshot['net_worth']['amount']:,.2f})"
+        )
+
+        # Get recipient name for personalization
+        if not name:
+            name = os.getenv("KUBERA_REPORT_NAME")
+
+        # Determine report type
+        if report_type:
+            # User specified report type
+            report_types = [ReportType(report_type)]
+        else:
+            # Auto-detect based on date (just use the first one if multiple)
+            report_types = storage.get_milestone_types(snapshot_date)
+
+        # Use the first report type (or only one if user specified)
+        selected_report_type = report_types[0]
+
+        console.print(f"[bold]Generating {selected_report_type.value} report...[/bold]")
+
+        # Get appropriate comparison snapshot
+        previous_snapshot = storage.get_comparison_snapshot(snapshot_date, selected_report_type)
+
+        if not previous_snapshot:
+            console.print(
+                "[yellow]Note:[/yellow] No comparison snapshot found. "
+                "Generating report with current balances only."
+            )
+
+        # Generate report
+        reporter = PortfolioReporter()
+        report_data = reporter.calculate_deltas(current_snapshot, previous_snapshot)
+
+        # Generate AI summary if we have previous data and AI is enabled
+        ai_summary = None
+        if previous_snapshot and not no_ai:
+            console.print("[bold]Generating AI insights...[/bold]")
+            ai_summary = reporter.generate_ai_summary(report_data, selected_report_type)
+            if ai_summary:
+                console.print("[green]✓[/green] AI insights generated")
+
+        # Generate HTML report
+        html_report = reporter.generate_html_report(
+            report_data,
+            report_type=selected_report_type,
+            ai_summary=ai_summary,
+            recipient_name=name,
+        )
+
+        # Determine output file path
+        if not output:
+            output = f"report_{date}.html"
+
+        output_path = Path(output).resolve()
+
+        # Write to file
+        with open(output_path, "w") as f:
+            f.write(html_report)
+
+        console.print(f"\n[bold green]✓ Report exported to:[/bold green] {output_path}")
+
+    except KuberaReportingError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        sys.exit(1)
+    except Exception as e:
+        console.print(f"[red]Unexpected error:[/red] {e}")
+        sys.exit(1)
+
+
+@cli.command()
 def regenerate_samples() -> None:
     """Regenerate sample reports with synthetic data and embedded pie charts."""
     try:

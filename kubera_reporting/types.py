@@ -32,7 +32,7 @@ class AccountSnapshot(TypedDict):
     value: MoneyValue
     category: Literal["asset", "debt"]
     sheet_name: str
-    subsheet_name: NotRequired[str | None]  # Optional: section within a sheet
+    section_name: NotRequired[str | None]  # Optional: section within a sheet
 
 
 class PortfolioSnapshot(TypedDict):
@@ -56,7 +56,7 @@ class AccountDelta(TypedDict):
     institution: str | None
     category: Literal["asset", "debt"]
     sheet_name: str
-    subsheet_name: NotRequired[str | None]  # Optional: section within a sheet
+    section_name: NotRequired[str | None]  # Optional: section within a sheet
     current_value: MoneyValue
     previous_value: MoneyValue
     change: MoneyValue

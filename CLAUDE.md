@@ -66,6 +66,12 @@ kubera-report send --date 2025-01-15
 # Send to specific email and skip AI insights
 kubera-report send --date 2025-01-15 --email user@example.com --no-ai
 
+# Export HTML report to file (no email sent)
+kubera-report export --date 2025-10-25 -o report.html
+
+# Export without AI insights
+kubera-report export --date 2025-10-25 --no-ai -o report.html
+
 # List all snapshots
 kubera-report list-snapshots
 
@@ -163,7 +169,7 @@ This means you'll have complete historical data for weekly/monthly/quarterly/yea
 7. **types.py** - Type definitions
    - `ReportType`: Enum for report types (DAILY, WEEKLY, MONTHLY, QUARTERLY, YEARLY)
    - `PortfolioSnapshot`: Complete portfolio state at point in time
-   - `AccountSnapshot`: Single account (has `sheet_name` for grouping, optional `subsheet_name`)
+   - `AccountSnapshot`: Single account (has `sheet_name` for grouping, optional `section_name`)
    - `AccountDelta`: Change between two snapshots
    - `ReportData`: Calculated deltas for report generation
 
@@ -171,7 +177,7 @@ This means you'll have complete historical data for weekly/monthly/quarterly/yea
 
 **Holdings Aggregation**: Raw Kubera API returns both parent accounts (e.g., "Kelli Trust - Bonds") and individual holdings (500 stocks with IDs like `{parent_id}_isin-AAPL`). The reporter filters to show only parent accounts with their aggregate values. This logic is in `_aggregate_holdings_to_accounts()`.
 
-**Sheet-Based Allocation**: Asset allocation uses `sheet_name` field from Kubera API (e.g., "Trust", "Retirement", "Bank"). The optional `subsheet_name` field provides additional categorization but is not currently used in allocation charts.
+**Sheet-Based Allocation**: Asset allocation uses `sheet_name` field from Kubera API (e.g., "Trust", "Retirement", "Bank"). The optional `section_name` field (from API's `sectionName`) provides additional categorization within sheets (e.g., "Taxable", "Tax Deferred", "Section 1") but is not currently used in allocation charts.
 
 **Smart Caching**: The `report` command checks if today's snapshot already exists before calling the API. This prevents unnecessary API calls and respects rate limits (30/min, 100-1000/day depending on tier).
 
@@ -366,3 +372,6 @@ GitHub Actions workflow (`.github/workflows/ci.yml`):
 - Uploads coverage to Codecov
 - All tests use fixtures (no API credentials needed)
 - be sure to run the ruff checks before committing code
+- always write scratch code into the scratch directory. If you are going to write python code for scratch work, make a file in scratch and then execute it.
+- always clean up scratch files in scratch directory before committing code
+- always check for any real data or PII before committing code

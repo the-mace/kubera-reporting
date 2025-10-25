@@ -26,7 +26,7 @@
       },
       "category": "asset",
       "sheet_name": "Investments",
-      "subsheet_name": "Taxable"
+      "section_name": "Taxable"
     },
     {
       "id": "uuid-inv-001_0",
@@ -38,7 +38,7 @@
       },
       "category": "asset",
       "sheet_name": "Investments",
-      "subsheet_name": "Taxable"
+      "section_name": "Taxable"
     },
     {
       "id": "uuid-inv-001_isin-us0001",
@@ -50,7 +50,7 @@
       },
       "category": "asset",
       "sheet_name": "Investments",
-      "subsheet_name": "Taxable"
+      "section_name": "Taxable"
     },
     {
       "id": "uuid-inv-001_isin-us0002",
@@ -62,7 +62,7 @@
       },
       "category": "asset",
       "sheet_name": "Investments",
-      "subsheet_name": "Taxable"
+      "section_name": "Taxable"
     },
     {
       "id": "uuid-inv-001_isin-us0003",
@@ -74,7 +74,7 @@
       },
       "category": "asset",
       "sheet_name": "Investments",
-      "subsheet_name": "Taxable"
+      "section_name": "Taxable"
     },
     {
       "id": "uuid-inv-002",
@@ -86,7 +86,7 @@
       },
       "category": "asset",
       "sheet_name": "Investments",
-      "subsheet_name": "Tax Deferred"
+      "section_name": "Tax Deferred"
     },
     {
       "id": "uuid-inv-002_0",
@@ -98,7 +98,7 @@
       },
       "category": "asset",
       "sheet_name": "Investments",
-      "subsheet_name": "Tax Deferred"
+      "section_name": "Tax Deferred"
     },
     {
       "id": "uuid-inv-002_cusip-bond001",
@@ -110,7 +110,7 @@
       },
       "category": "asset",
       "sheet_name": "Investments",
-      "subsheet_name": "Tax Deferred"
+      "section_name": "Tax Deferred"
     },
     {
       "id": "uuid-inv-002_cusip-bond002",
@@ -122,7 +122,7 @@
       },
       "category": "asset",
       "sheet_name": "Investments",
-      "subsheet_name": "Tax Deferred"
+      "section_name": "Tax Deferred"
     },
     {
       "id": "uuid-ret-001",
@@ -134,7 +134,7 @@
       },
       "category": "asset",
       "sheet_name": "Retirement",
-      "subsheet_name": null
+      "section_name": "401(k)"
     },
     {
       "id": "uuid-ret-001_0",
@@ -146,7 +146,7 @@
       },
       "category": "asset",
       "sheet_name": "Retirement",
-      "subsheet_name": null
+      "section_name": "401(k)"
     },
     {
       "id": "uuid-ret-001_isin-us0011",
@@ -158,7 +158,7 @@
       },
       "category": "asset",
       "sheet_name": "Retirement",
-      "subsheet_name": null
+      "section_name": "401(k)"
     },
     {
       "id": "uuid-ret-001_isin-us0012",
@@ -170,7 +170,7 @@
       },
       "category": "asset",
       "sheet_name": "Retirement",
-      "subsheet_name": null
+      "section_name": "IRA"
     },
     {
       "id": "uuid-bank-001",
@@ -182,7 +182,7 @@
       },
       "category": "asset",
       "sheet_name": "Banks",
-      "subsheet_name": null
+      "section_name": "Checking"
     },
     {
       "id": "uuid-bank-002",
@@ -194,7 +194,7 @@
       },
       "category": "asset",
       "sheet_name": "Banks",
-      "subsheet_name": null
+      "section_name": "Savings"
     },
     {
       "id": "uuid-prop-001",
@@ -206,7 +206,7 @@
       },
       "category": "asset",
       "sheet_name": "Real Estate",
-      "subsheet_name": null
+      "section_name": "Primary Residence"
     },
     {
       "id": "uuid-car-001",
@@ -218,7 +218,7 @@
       },
       "category": "asset",
       "sheet_name": "Vehicles",
-      "subsheet_name": null
+      "section_name": "Personal"
     },
     {
       "id": "uuid-car-002",
@@ -230,7 +230,7 @@
       },
       "category": "asset",
       "sheet_name": "Vehicles",
-      "subsheet_name": null
+      "section_name": "Personal"
     },
     {
       "id": "uuid-crypto-001",
@@ -242,7 +242,7 @@
       },
       "category": "asset",
       "sheet_name": "Crypto",
-      "subsheet_name": null
+      "section_name": "Coinbase"
     },
     {
       "id": "uuid-debt-001",
@@ -254,7 +254,7 @@
       },
       "category": "debt",
       "sheet_name": "Mortgages",
-      "subsheet_name": null
+      "section_name": "Home Mortgage"
     },
     {
       "id": "uuid-debt-002",
@@ -266,7 +266,7 @@
       },
       "category": "debt",
       "sheet_name": "Loans",
-      "subsheet_name": null
+      "section_name": "Auto Loan"
     }
   ]
 }

@@ -85,7 +85,7 @@ class KuberaFetcher:
                         "value": asset["value"],
                         "category": "asset",
                         "sheet_name": asset["sheetName"],
-                        "subsheet_name": asset.get("subsheetName"),
+                        "section_name": asset.get("sectionName"),
                     }
                 )
 
@@ -99,7 +99,7 @@ class KuberaFetcher:
                         "value": debt["value"],
                         "category": "debt",
                         "sheet_name": debt["sheetName"],
-                        "subsheet_name": debt.get("subsheetName"),
+                        "section_name": debt.get("sectionName"),
                     }
                 )
 

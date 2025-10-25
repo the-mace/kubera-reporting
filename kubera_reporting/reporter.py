@@ -134,7 +134,7 @@ class PortfolioReporter:
                     "institution": account["institution"],
                     "category": account["category"],
                     "sheet_name": account["sheet_name"],
-                    "subsheet_name": account.get("subsheet_name"),
+                    "section_name": account.get("section_name"),
                     "current_value": account["value"],
                     "previous_value": prev_account["value"],
                     "change": {"amount": change_amount, "currency": current["currency"]},
@@ -148,7 +148,7 @@ class PortfolioReporter:
                     "institution": account["institution"],
                     "category": account["category"],
                     "sheet_name": account["sheet_name"],
-                    "subsheet_name": account.get("subsheet_name"),
+                    "section_name": account.get("section_name"),
                     "current_value": account["value"],
                     "previous_value": {"amount": 0.0, "currency": current["currency"]},
                     "change": account["value"],
@@ -423,39 +423,82 @@ Portfolio Data:
             ReportGenerationError: If generation fails
         """
         try:
-            # Group assets by sheet name
+            # Group assets by sheet > section (two-level hierarchy)
             from collections import defaultdict
 
-            assets_by_sheet: dict[str, list[AccountDelta]] = defaultdict(list)
+            # First level: sheet_name
+            assets_by_sheet: dict[str, dict[str, list[AccountDelta]]] = defaultdict(
+                lambda: defaultdict(list)
+            )
+
             for asset in report_data["asset_changes"]:
-                assets_by_sheet[asset["sheet_name"]].append(asset)
+                sheet = asset["sheet_name"] or "Uncategorized"
+                # Use section_name for sub-grouping, fall back to "Default" if not available
+                section = asset.get("section_name") or "Default"
+                assets_by_sheet[sheet][section].append(asset)
 
-            # Sort sheets alphabetically and sort accounts within each sheet by value
-            for sheet_accounts in assets_by_sheet.values():
-                sheet_accounts.sort(key=lambda x: x["current_value"]["amount"], reverse=True)
+            # Sort accounts within each section by value
+            for sheet_sections in assets_by_sheet.values():
+                for section_accounts in sheet_sections.values():
+                    section_accounts.sort(key=lambda x: x["current_value"]["amount"], reverse=True)
 
-            # Calculate sheet totals with percentage changes
+            # Calculate totals for both sheet and section levels
             sheet_totals = {}
-            for sheet_name, accounts in assets_by_sheet.items():
-                current_total = sum(a["current_value"]["amount"] for a in accounts)
-                change_total = (
-                    sum(a["change"]["amount"] for a in accounts)
-                    if report_data["previous"]
-                    else None
-                )
+            section_totals: dict[str, dict[str, dict[str, float | int | None]]] = defaultdict(dict)
 
-                # Calculate percentage change
-                change_percent = None
-                if report_data["previous"] and change_total is not None:
-                    previous_total = sum(a["previous_value"]["amount"] for a in accounts)
-                    if previous_total != 0:
-                        change_percent = (change_total / previous_total) * 100
+            for sheet_name, sheet_sections in assets_by_sheet.items():
+                sheet_current_total = 0.0
+                sheet_change_total = 0.0 if report_data["previous"] else None
+                sheet_previous_total = 0.0
+                sheet_account_count = 0
+
+                for section_name, accounts in sheet_sections.items():
+                    # Calculate section-level totals
+                    section_current = sum(a["current_value"]["amount"] for a in accounts)
+                    section_change = (
+                        sum(a["change"]["amount"] for a in accounts)
+                        if report_data["previous"]
+                        else None
+                    )
+                    section_previous = sum(a["previous_value"]["amount"] for a in accounts)
+
+                    # Calculate section percentage change
+                    section_change_percent = None
+                    if (
+                        report_data["previous"]
+                        and section_change is not None
+                        and section_previous != 0
+                    ):
+                        section_change_percent = (section_change / section_previous) * 100
+
+                    section_totals[sheet_name][section_name] = {
+                        "count": len(accounts),
+                        "total_value": section_current,
+                        "total_change": section_change,
+                        "change_percent": section_change_percent,
+                    }
+
+                    # Accumulate for sheet totals
+                    sheet_current_total += section_current
+                    if sheet_change_total is not None and section_change is not None:
+                        sheet_change_total += section_change
+                    sheet_previous_total += section_previous
+                    sheet_account_count += len(accounts)
+
+                # Calculate sheet-level percentage change
+                sheet_change_percent = None
+                if (
+                    report_data["previous"]
+                    and sheet_change_total is not None
+                    and sheet_previous_total != 0
+                ):
+                    sheet_change_percent = (sheet_change_total / sheet_previous_total) * 100
 
                 sheet_totals[sheet_name] = {
-                    "count": len(accounts),
-                    "total_value": current_total,
-                    "total_change": change_total,
-                    "change_percent": change_percent,
+                    "count": sheet_account_count,
+                    "total_value": sheet_current_total,
+                    "total_change": sheet_change_total,
+                    "change_percent": sheet_change_percent,
                 }
 
             # Keep top movers for backwards compatibility
@@ -515,6 +558,7 @@ Portfolio Data:
                 debt_movers=debt_movers,
                 assets_by_sheet=sorted_sheets,
                 sheet_totals=sheet_totals,
+                section_totals=section_totals,
                 total_asset_change=total_asset_change,
                 total_asset_change_percent=total_asset_change_percent,
                 total_debt_change=total_debt_change,
@@ -684,8 +728,9 @@ space-between; align-items: center;">
                 </span>
             </div>
 
-            {% for sheet_name, accounts in assets_by_sheet.items() %}
+            {% for sheet_name, sheet_sections in assets_by_sheet.items() %}
             <div style="margin-top: 20px;">
+                <!-- Sheet-level header -->
                 <div style="font-size: 16px; font-weight: 600; color: #555; \
 margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
                     {{ sheet_name }}
@@ -709,27 +754,86 @@ font-size: 13px;">
                     </span>
                 </div>
 
-                {% for account in accounts %}
-                <div style="display: flex; justify-content: space-between; align-items: center; \
-padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                    <div style="flex: 1;">
-                        <div style="font-weight: 500; color: #333;">{{ account.name }}</div>
-                        {% if account.institution %}
-                        <div style="font-size: 12px; color: #999;">{{ account.institution }}</div>
-                        {% endif %}
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 600; color: #333;">\
+                <!-- Section-level grouping within sheet (only if multiple sections) -->
+                {% if sheet_sections|length > 1 %}
+                    {% for section_name, accounts in sheet_sections.items() %}
+                    {% set section = section_totals[sheet_name][section_name] %}
+                    <div style="margin-left: 15px; margin-top: 15px;">
+                        <div style="font-size: 14px; font-weight: 600; color: #666; \
+margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
+                            {{ section_name }}
+                            <span style="font-size: 13px; color: #888; font-weight: 500;">
+                                ({{ section.count }} account{{ 's' if section.count != 1 else '' }})
+                            </span>
+                            <span style="float: right; font-size: 13px;">
+                                {{ format_money({'amount': section.total_value, \
+'currency': current.currency}) }}
+                                {% if previous and section.total_change %}
+                                {% set section_change_text, section_change_color = format_change(
+                                    {'amount': section.total_change, 'currency': current.currency},
+                                    section.change_percent) %}
+                                <span style="color: {{ section_change_color }}; \
+margin-left: 6px; font-size: 12px;">
+                                    {{ section_change_text }}
+                                </span>
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <!-- Individual accounts within section -->
+                        {% for account in accounts %}
+                        <div style="display: flex; justify-content: space-between; \
+align-items: center; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 500; color: #333; font-size: 13px;">\
+{{ account.name }}</div>
+                                {% if account.institution %}
+                                <div style="font-size: 11px; color: #999;">\
+{{ account.institution }}</div>
+                                {% endif %}
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: #333; font-size: 13px;">\
 {{ format_money(account.current_value) }}</div>
-                        {% if previous %}
-                        {% set change_text, change_color = format_change(
-                            account.change, account.change_percent) %}
-                        <div style="font-size: 14px; font-weight: 600; color: {{ change_color }};">\
-{{ change_text }}</div>
-                        {% endif %}
+                                {% if previous %}
+                                {% set change_text, change_color = format_change(
+                                    account.change, account.change_percent) %}
+                                <div style="font-size: 12px; font-weight: 600; \
+color: {{ change_color }};">{{ change_text }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
-                </div>
-                {% endfor %}
+                    {% endfor %}
+                {% else %}
+                    <!-- Single section: skip section header, show accounts directly -->
+                    {% for section_name, accounts in sheet_sections.items() %}
+                        {% for account in accounts %}
+                        <div style="display: flex; justify-content: space-between; \
+align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 500; color: #333;">\
+{{ account.name }}</div>
+                                {% if account.institution %}
+                                <div style="font-size: 12px; color: #999;">\
+{{ account.institution }}</div>
+                                {% endif %}
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: #333;">\
+{{ format_money(account.current_value) }}</div>
+                                {% if previous %}
+                                {% set change_text, change_color = format_change(
+                                    account.change, account.change_percent) %}
+                                <div style="font-size: 14px; font-weight: 600; \
+color: {{ change_color }};">{{ change_text }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endfor %}
+                {% endif %}
             </div>
             {% endfor %}
         </div>
