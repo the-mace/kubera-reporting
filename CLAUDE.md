@@ -66,11 +66,17 @@ kubera-report send --date 2025-01-15
 # Send to specific email and skip AI insights
 kubera-report send --date 2025-01-15 --email user@example.com --no-ai
 
+# Send report with masked dollar amounts (shows percentages only)
+kubera-report send --date 2025-01-15 --hide-amounts
+
 # Export HTML report to file (no email sent)
 kubera-report export --date 2025-10-25 -o report.html
 
 # Export without AI insights
 kubera-report export --date 2025-10-25 --no-ai -o report.html
+
+# Export with hidden amounts (for privacy when sharing)
+kubera-report export --date 2025-10-25 --hide-amounts -o report.html
 
 # List all snapshots
 kubera-report list-snapshots

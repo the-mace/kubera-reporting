@@ -36,6 +36,7 @@ def _generate_and_send_report(
     generate_ai: bool = True,
     report_date: datetime | None = None,
     dry_run: bool = False,
+    hide_amounts: bool = False,
 ) -> None:
     """Helper function to generate and send a single report.
 
@@ -48,6 +49,7 @@ def _generate_and_send_report(
         generate_ai: Whether to generate AI insights (default: True)
         report_date: Optional date for the report (defaults to today)
         dry_run: If True, generate report but don't send email (default: False)
+        hide_amounts: If True, mask dollar amounts in report (default: False)
     """
     reporter = PortfolioReporter()
     report_data = reporter.calculate_deltas(current_snapshot, previous_snapshot)
@@ -56,13 +58,19 @@ def _generate_and_send_report(
     ai_summary = None
     if previous_snapshot and generate_ai:
         console.print(f"[bold]Generating AI insights for {report_type.value} report...[/bold]")
-        ai_summary = reporter.generate_ai_summary(report_data, report_type)
+        ai_summary = reporter.generate_ai_summary(
+            report_data, report_type, hide_amounts=hide_amounts
+        )
         if ai_summary:
             console.print(f"[green]✓[/green] AI insights generated for {report_type.value} report")
 
     # Generate HTML report with embedded chart (base64 for better forwarding)
     html_report = reporter.generate_html_report(
-        report_data, report_type=report_type, ai_summary=ai_summary, recipient_name=recipient_name
+        report_data,
+        report_type=report_type,
+        ai_summary=ai_summary,
+        recipient_name=recipient_name,
+        hide_amounts=hide_amounts,
     )
 
     console.print(f"[green]✓[/green] {report_type.value.capitalize()} report generated")
@@ -483,6 +491,11 @@ def list_snapshots(data_dir: str | None) -> None:
     is_flag=True,
     help="Generate report without sending email (for testing)",
 )
+@click.option(
+    "--hide-amounts",
+    is_flag=True,
+    help="Mask dollar amounts in report (shows percentages only)",
+)
 def send(
     date: str,
     email: str | None,
@@ -490,6 +503,7 @@ def send(
     data_dir: str | None,
     no_ai: bool,
     dry_run: bool,
+    hide_amounts: bool,
 ) -> None:
     """Send email report for a specific historical date."""
     try:
@@ -572,6 +586,7 @@ def send(
                 generate_ai=not no_ai,
                 report_date=snapshot_date,
                 dry_run=dry_run,
+                hide_amounts=hide_amounts,
             )
 
         if dry_run:
@@ -614,6 +629,11 @@ def send(
     type=click.Choice(["daily", "weekly", "monthly", "quarterly", "yearly"]),
     help="Report type to generate (default: auto-detect based on date)",
 )
+@click.option(
+    "--hide-amounts",
+    is_flag=True,
+    help="Mask dollar amounts in report (shows percentages only)",
+)
 def export(
     date: str,
     output: str | None,
@@ -621,6 +641,7 @@ def export(
     data_dir: str | None,
     no_ai: bool,
     report_type: str | None,
+    hide_amounts: bool,
 ) -> None:
     """Export HTML report for a specific date to a file."""
     try:
@@ -684,7 +705,9 @@ def export(
         ai_summary = None
         if previous_snapshot and not no_ai:
             console.print("[bold]Generating AI insights...[/bold]")
-            ai_summary = reporter.generate_ai_summary(report_data, selected_report_type)
+            ai_summary = reporter.generate_ai_summary(
+                report_data, selected_report_type, hide_amounts=hide_amounts
+            )
             if ai_summary:
                 console.print("[green]✓[/green] AI insights generated")
 
@@ -694,6 +717,7 @@ def export(
             report_type=selected_report_type,
             ai_summary=ai_summary,
             recipient_name=name,
+            hide_amounts=hide_amounts,
         )
 
         # Determine output file path

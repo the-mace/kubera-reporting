@@ -294,13 +294,17 @@ class PortfolioReporter:
         return {}
 
     def generate_ai_summary(
-        self, report_data: ReportData, report_type: ReportType = ReportType.DAILY
+        self,
+        report_data: ReportData,
+        report_type: ReportType = ReportType.DAILY,
+        hide_amounts: bool = False,
     ) -> str | None:
         """Generate AI summary of portfolio changes.
 
         Args:
             report_data: Report data with deltas
             report_type: Type of report being generated
+            hide_amounts: If True, ask LLM to avoid specific dollar amounts
 
         Returns:
             AI-generated summary or None if generation fails
@@ -350,23 +354,70 @@ class PortfolioReporter:
             allocation = self.calculate_asset_allocation(report_data["current"])
 
             # Build comprehensive portfolio data for prompt
-            portfolio_data = {
-                "net_worth": {
-                    "current": report_data["current"]["net_worth"]["amount"],
-                    "change": net_worth_change["amount"],
-                    "change_percent": (
-                        (net_worth_change["amount"] / previous["net_worth"]["amount"] * 100)
-                        if previous["net_worth"]["amount"] != 0
-                        else 0
-                    ),
-                },
-                "asset_allocation": allocation,
-                "top_asset_movers": top_asset_movers,
-                "top_debt_movers": top_debt_movers,
-            }
+            if hide_amounts:
+                # Omit dollar amounts, include only percentages
+                portfolio_data = {
+                    "net_worth": {
+                        "change_percent": (
+                            (net_worth_change["amount"] / previous["net_worth"]["amount"] * 100)
+                            if previous["net_worth"]["amount"] != 0
+                            else 0
+                        ),
+                    },
+                    "asset_allocation": allocation,
+                    "top_asset_movers": [
+                        {
+                            "name": d["name"],
+                            "sheet": d["sheet_name"],
+                            "percent": d["change_percent"],
+                        }
+                        for d in report_data["asset_changes"][:10]
+                    ],
+                    "top_debt_movers": [
+                        {
+                            "name": d["name"],
+                        }
+                        for d in report_data["debt_changes"][:5]
+                    ],
+                }
 
-            prompt = f"""Analyze this {period} portfolio report and provide a concise, actionable \
-insights paragraph (3-4 sentences max). Focus on:
+                prompt = f"""Analyze this {period} portfolio report and provide a concise, \
+actionable insights paragraph (3-4 sentences max). Focus on:
+
+1. **What happened**: Identify the primary driver of net worth change over this {period} period - \
+be specific about which accounts/categories dominated the movement
+2. **Why it matters**: Connect {period} movements to portfolio structure (asset allocation \
+percentages) and highlight concentration risks or opportunities
+3. **What to watch**: Flag notable anomalies, divergences between asset classes, or \
+emerging patterns that warrant attention
+4. **Action consideration**: Suggest one specific review action based on the data (e.g., \
+rebalancing, investigating outliers, sector analysis)
+
+IMPORTANT: Do NOT mention specific dollar amounts. Use only percentages and relative terms like \
+"significant", "modest", "substantial", etc. Write in a confident, analytical tone that assumes \
+financial literacy.
+
+Portfolio Data:
+{json.dumps(portfolio_data, indent=2)}"""
+            else:
+                # Include full dollar amounts
+                portfolio_data = {
+                    "net_worth": {
+                        "current": report_data["current"]["net_worth"]["amount"],
+                        "change": net_worth_change["amount"],
+                        "change_percent": (
+                            (net_worth_change["amount"] / previous["net_worth"]["amount"] * 100)
+                            if previous["net_worth"]["amount"] != 0
+                            else 0
+                        ),
+                    },
+                    "asset_allocation": allocation,
+                    "top_asset_movers": top_asset_movers,
+                    "top_debt_movers": top_debt_movers,
+                }
+
+                prompt = f"""Analyze this {period} portfolio report and provide a concise, \
+actionable insights paragraph (3-4 sentences max). Focus on:
 
 1. **What happened**: Identify the primary driver of net worth change over this {period} period - \
 be specific about which accounts/categories dominated the movement
@@ -406,6 +457,7 @@ Portfolio Data:
         top_n: int = 20,
         ai_summary: str | None = None,
         recipient_name: str | None = None,
+        hide_amounts: bool = False,
     ) -> str:
         """Generate HTML email report with embedded base64 charts for better forwarding.
 
@@ -415,6 +467,7 @@ Portfolio Data:
             top_n: Number of top movers to show (default: 20)
             ai_summary: Optional AI-generated summary
             recipient_name: Optional name for greeting (default: "Portfolio Report")
+            hide_amounts: If True, mask dollar amounts (show "$XX" instead)
 
         Returns:
             HTML report string with inline styles and base64-embedded charts
@@ -548,6 +601,18 @@ Portfolio Data:
             # Format report type for display
             report_type_display = report_type.value.capitalize()
 
+            # Create wrapper functions that respect hide_amounts flag
+            def format_money_wrapper(value: MoneyValue) -> str:
+                return self._format_money(value, hide_amounts=hide_amounts)
+
+            def format_net_worth_wrapper(value: MoneyValue) -> str:
+                return self._format_net_worth(value, hide_amounts=hide_amounts)
+
+            def format_change_wrapper(
+                change: MoneyValue, change_percent: float | None = None
+            ) -> tuple[str, str]:
+                return self._format_change(change, change_percent, hide_amounts=hide_amounts)
+
             template = Template(self._get_html_template())
             return template.render(
                 current=report_data["current"],
@@ -569,16 +634,26 @@ Portfolio Data:
                 recipient_name=greeting,
                 report_date=datetime.now().strftime("%b %d, %Y"),
                 report_type=report_type_display,
-                format_money=self._format_money,
-                format_net_worth=self._format_net_worth,
-                format_change=self._format_change,
+                format_money=format_money_wrapper,
+                format_net_worth=format_net_worth_wrapper,
+                format_change=format_change_wrapper,
             )
         except Exception as e:
             raise ReportGenerationError(f"Failed to generate HTML report: {e}") from e
 
-    def _format_money(self, value: MoneyValue) -> str:
-        """Format money value."""
+    def _format_money(self, value: MoneyValue, hide_amounts: bool = False) -> str:
+        """Format money value.
+
+        Args:
+            value: Money value to format
+            hide_amounts: If True, return "$XX" instead of actual amount
+
+        Returns:
+            Formatted money string
+        """
         symbol = "$" if value["currency"] == "USD" else value["currency"]
+        if hide_amounts:
+            return f"{symbol}XX"
         return f"{symbol}{value['amount']:,.0f}"
 
     def _get_fire_category(self, amount: float) -> str | None:
@@ -601,16 +676,17 @@ Portfolio Data:
         else:
             return "Fat FIRE"
 
-    def _format_net_worth(self, value: MoneyValue) -> str:
+    def _format_net_worth(self, value: MoneyValue, hide_amounts: bool = False) -> str:
         """Format net worth value with FIRE category indicator.
 
         Args:
             value: Net worth value
+            hide_amounts: If True, mask the dollar amount but keep FIRE category
 
         Returns:
-            Formatted string like "$1,234,567 (Fat FIRE)" or "$750,000"
+            Formatted string like "$1,234,567 (Fat FIRE)" or "$750,000" or "$XX (Fat FIRE)"
         """
-        formatted_money = self._format_money(value)
+        formatted_money = self._format_money(value, hide_amounts=hide_amounts)
         category = self._get_fire_category(value["amount"])
 
         if category:
@@ -618,13 +694,14 @@ Portfolio Data:
         return formatted_money
 
     def _format_change(
-        self, change: MoneyValue, change_percent: float | None = None
+        self, change: MoneyValue, change_percent: float | None = None, hide_amounts: bool = False
     ) -> tuple[str, str]:
         """Format change value with color and optional percentage.
 
         Args:
             change: Money change amount
             change_percent: Optional percentage change
+            hide_amounts: If True, mask dollar amounts but show percentage
 
         Returns:
             Tuple of (formatted_string, color)
@@ -634,13 +711,22 @@ Portfolio Data:
 
         # Format the base change amount
         if amount > 0:
-            base_text = f"↑ {symbol}{amount:,.0f}"
+            if hide_amounts:
+                base_text = f"↑ {symbol}XX"
+            else:
+                base_text = f"↑ {symbol}{amount:,.0f}"
             color = "#00b383"  # Green with up arrow
         elif amount < 0:
-            base_text = f"↓ {symbol}{abs(amount):,.0f}"
+            if hide_amounts:
+                base_text = f"↓ {symbol}XX"
+            else:
+                base_text = f"↓ {symbol}{abs(amount):,.0f}"
             color = "#e63946"  # Red with down arrow
         else:
-            base_text = f"{symbol}{amount:,.0f}"
+            if hide_amounts:
+                base_text = f"{symbol}XX"
+            else:
+                base_text = f"{symbol}{amount:,.0f}"
             color = "#666666"  # Gray
 
         # Add percentage if provided
