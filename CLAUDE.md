@@ -382,3 +382,4 @@ GitHub Actions workflow (`.github/workflows/ci.yml`):
 - always clean up scratch files in scratch directory before committing code
 - always check for any real data or PII before committing code
 - when debugging/working on the reports and a fix is ready, generate a real html report and open it in the default browser so the user can see the changes
+- Review all changes to make sure there's no PII (person names, account names, brokerage names, etc) before every commit

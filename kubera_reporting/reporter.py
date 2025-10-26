@@ -434,22 +434,129 @@ class PortfolioReporter:
             net_worth_change = report_data["net_worth_change"]
             previous = report_data["previous"]
 
-            # Build context for AI
-            top_asset_movers = [
+            # For AI summary, calculate deltas on UNAGGREGATED data to capture individual holdings
+            # This allows AI to see big moves in individual stocks/crypto, not just parent accounts
+            current_unagg = report_data.get("current_unaggregated", report_data["current"])
+
+            # Build lookup for previous accounts (unaggregated)
+            prev_accounts_lookup = {}
+            if previous:
+                for account in previous["accounts"]:
+                    prev_accounts_lookup[account["id"]] = account
+
+            # Calculate deltas for ALL accounts (including individual holdings)
+            # Exclude physical assets (real estate, cars, domains) - no daily volatility
+            all_asset_deltas = []
+            for account in current_unagg["accounts"]:
+                if account["category"] != "asset":
+                    continue
+
+                # Skip physical assets - no meaningful daily volatility
+                account_type = (account.get("account_type") or "").lower()
+                sub_type = (account.get("sub_type") or "").lower()
+                sheet_name = (account.get("sheet_name") or "").lower()
+
+                # Filter out real estate
+                if account_type == "property":
+                    continue
+                if "real estate" in sheet_name:
+                    continue
+                if sub_type in ["primary residence", "investment property"]:
+                    continue
+
+                # Filter out vehicles
+                if "vehicle" in sub_type or "car" in sub_type:
+                    continue
+
+                # Filter out domain names and other digital property
+                if "domain" in sub_type or "domain" in account["name"].lower():
+                    continue
+
+                prev_account = prev_accounts_lookup.get(account["id"])
+                if not prev_account:
+                    continue  # Skip new accounts for AI summary (focus on changes)
+
+                change_amount = account["value"]["amount"] - prev_account["value"]["amount"]
+                if change_amount == 0:
+                    continue  # Skip accounts with no change
+
+                change_percent = None
+                if prev_account["value"]["amount"] != 0:
+                    change_percent = (change_amount / abs(prev_account["value"]["amount"])) * 100
+
+                all_asset_deltas.append(
+                    {
+                        "name": account["name"],
+                        "sheet": account["sheet_name"],
+                        "current_value": account["value"]["amount"],
+                        "previous_value": prev_account["value"]["amount"],
+                        "change": change_amount,
+                        "percent": change_percent,
+                        "is_holding": "_"
+                        in account["id"],  # Individual holding if ID has underscore
+                    }
+                )
+
+            # Build TWO perspectives for AI:
+            # 1. Top movers by dollar amount (what drove net worth change)
+            # 2. Top movers by percentage (what had notable swings, even if small positions)
+
+            # Sort by absolute change amount for net worth impact
+            by_dollar = sorted(
+                all_asset_deltas,
+                key=lambda x: abs(float(x["change"])),  # type: ignore[arg-type]
+                reverse=True,
+            )
+
+            # Sort by absolute percentage change for notable moves
+            by_percent = sorted(
+                [d for d in all_asset_deltas if d["percent"] is not None],
+                key=lambda x: abs(float(x["percent"])),  # type: ignore[arg-type]
+                reverse=True,
+            )
+
+            # Build context for AI with both perspectives
+            top_dollar_movers = [
                 {
                     "name": d["name"],
-                    "sheet": d["sheet_name"],
-                    "change": d["change"]["amount"],
-                    "percent": d["change_percent"],
+                    "sheet": d["sheet"],
+                    "current_value": round(float(d["current_value"]), 2),  # type: ignore[arg-type]
+                    "previous_value": round(float(d["previous_value"]), 2),  # type: ignore[arg-type]
+                    "change": round(float(d["change"]), 2),  # type: ignore[arg-type]
+                    "percent": (
+                        round(float(d["percent"]), 2)  # type: ignore[arg-type]
+                        if d["percent"] is not None
+                        else None
+                    ),
+                    "is_holding": d["is_holding"],
                 }
-                for d in report_data["asset_changes"][:10]
+                for d in by_dollar[:3]
             ]
+
+            top_percent_movers = [
+                {
+                    "name": d["name"],
+                    "sheet": d["sheet"],
+                    "current_value": round(float(d["current_value"]), 2),  # type: ignore[arg-type]
+                    "change": round(float(d["change"]), 2),  # type: ignore[arg-type]
+                    "percent": round(float(d["percent"]), 2),  # type: ignore[arg-type]
+                    "is_holding": d["is_holding"],
+                }
+                for d in by_percent[:3]
+            ]
+
+            # Note: For now, debt movers use aggregated data (less common to have individual debts)
             top_debt_movers = [
                 {
                     "name": d["name"],
-                    "change": d["change"]["amount"],
+                    "current_value": round(d["current_value"]["amount"], 2),
+                    "previous_value": round(d["previous_value"]["amount"], 2),
+                    "change": round(d["change"]["amount"], 2),
+                    "percent": (
+                        round(d["change_percent"], 2) if d["change_percent"] is not None else None
+                    ),
                 }
-                for d in report_data["debt_changes"][:5]
+                for d in report_data["debt_changes"][:3]
             ]
 
             # Calculate asset allocation (use unaggregated for accurate categorization)
@@ -459,48 +566,66 @@ class PortfolioReporter:
             allocation = self.calculate_asset_allocation(snapshot_for_allocation)
 
             # Build comprehensive portfolio data for prompt
+            # Round allocation percentages to 2 decimal places
+            allocation_rounded = {k: round(v, 2) for k, v in allocation.items()}
+
             if hide_amounts:
                 # Omit dollar amounts, include only percentages
                 portfolio_data = {
                     "net_worth": {
-                        "change_percent": (
+                        "change_percent": round(
                             (net_worth_change["amount"] / previous["net_worth"]["amount"] * 100)
                             if previous["net_worth"]["amount"] != 0
-                            else 0
+                            else 0,
+                            2,
                         ),
                     },
-                    "asset_allocation": allocation,
-                    "top_asset_movers": [
+                    "asset_allocation": allocation_rounded,
+                    "top_dollar_movers": [
                         {
                             "name": d["name"],
-                            "sheet": d["sheet_name"],
-                            "percent": d["change_percent"],
+                            "sheet": d["sheet"],
+                            "percent": d["percent"],
+                            "is_holding": d["is_holding"],
                         }
-                        for d in report_data["asset_changes"][:10]
+                        for d in top_dollar_movers
+                    ],
+                    "top_percent_movers": [
+                        {
+                            "name": d["name"],
+                            "sheet": d["sheet"],
+                            "percent": d["percent"],
+                            "is_holding": d["is_holding"],
+                        }
+                        for d in top_percent_movers
                     ],
                     "top_debt_movers": [
                         {
                             "name": d["name"],
+                            "percent": (
+                                round(d["change_percent"], 2)
+                                if d["change_percent"] is not None
+                                else None
+                            ),
                         }
-                        for d in report_data["debt_changes"][:5]
+                        for d in report_data["debt_changes"][:3]
                     ],
                 }
 
-                prompt = f"""Analyze this {period} portfolio report and provide a concise, \
-actionable insights paragraph (3-4 sentences max). Focus on:
+                prompt = f"""Analyze this {period} portfolio report. Write 1-2 sentences that:
 
-1. **What happened**: Identify the primary driver of net worth change over this {period} period - \
-be specific about which accounts/categories dominated the movement
-2. **Why it matters**: Connect {period} movements to portfolio structure (asset allocation \
-percentages) and highlight concentration risks or opportunities
-3. **What to watch**: Flag notable anomalies, divergences between asset classes, or \
-emerging patterns that warrant attention
-4. **Action consideration**: Suggest one specific review action based on the data (e.g., \
-rebalancing, investigating outliers, sector analysis)
+1. State what drove the net worth change (use top_dollar_movers - these had the biggest impact)
+2. If any top_percent_movers are NOT already in top_dollar_movers AND have notable % changes \
+(e.g., >5%), briefly mention them as "also notable: [name] moved X%"
 
-IMPORTANT: Do NOT mention specific dollar amounts. Use only percentages and relative terms like \
-"significant", "modest", "substantial", etc. Write in a confident, analytical tone that assumes \
-financial literacy.
+Note: "is_holding": true means individual stock/crypto/asset within a larger account.
+
+CRITICAL RULES:
+- Do NOT mention specific dollar amounts - use only percentages
+- Do NOT suggest actions or what to watch
+- Do NOT mention asset allocation (shown in pie chart)
+- ONLY use data provided - do not infer
+- Keep factual and brief - max 2 sentences
 
 Portfolio Data:
 {json.dumps(portfolio_data, indent=2)}"""
@@ -508,33 +633,35 @@ Portfolio Data:
                 # Include full dollar amounts
                 portfolio_data = {
                     "net_worth": {
-                        "current": report_data["current"]["net_worth"]["amount"],
-                        "change": net_worth_change["amount"],
-                        "change_percent": (
+                        "current": round(report_data["current"]["net_worth"]["amount"], 2),
+                        "change": round(net_worth_change["amount"], 2),
+                        "change_percent": round(
                             (net_worth_change["amount"] / previous["net_worth"]["amount"] * 100)
                             if previous["net_worth"]["amount"] != 0
-                            else 0
+                            else 0,
+                            2,
                         ),
                     },
-                    "asset_allocation": allocation,
-                    "top_asset_movers": top_asset_movers,
+                    "asset_allocation": allocation_rounded,
+                    "top_dollar_movers": top_dollar_movers,
+                    "top_percent_movers": top_percent_movers,
                     "top_debt_movers": top_debt_movers,
                 }
 
-                prompt = f"""Analyze this {period} portfolio report and provide a concise, \
-actionable insights paragraph (3-4 sentences max). Focus on:
+                prompt = f"""Analyze this {period} portfolio report. Write 1-2 sentences that:
 
-1. **What happened**: Identify the primary driver of net worth change over this {period} period - \
-be specific about which accounts/categories dominated the movement
-2. **Why it matters**: Connect {period} movements to portfolio structure (asset allocation \
-percentages) and highlight concentration risks or opportunities
-3. **What to watch**: Flag notable anomalies, divergences between asset classes, or \
-emerging patterns that warrant attention
-4. **Action consideration**: Suggest one specific review action based on the data (e.g., \
-rebalancing, investigating outliers, sector analysis)
+1. State what drove the net worth change (use top_dollar_movers - these had the biggest $ impact)
+2. If any top_percent_movers are NOT already in top_dollar_movers AND have notable % changes \
+(e.g., >5%), briefly mention them as "also notable: [name] moved $X (Y%)"
 
-Avoid generic statements. Use specific numbers, percentages, and account names. Write in a \
-confident, analytical tone that assumes financial literacy.
+Note: "is_holding": true means individual stock/crypto/asset within a larger account.
+
+CRITICAL RULES:
+- Do NOT suggest actions or what to watch
+- Do NOT mention asset allocation (shown in pie chart)
+- ONLY use data provided - do not infer
+- Use exact names, dollar amounts, and percentages from the data
+- Keep factual and brief - max 2 sentences
 
 Portfolio Data:
 {json.dumps(portfolio_data, indent=2)}"""
@@ -702,8 +829,30 @@ Portfolio Data:
                 chart_b64 = base64.b64encode(chart_bytes).decode("utf-8")
                 chart_src = f"data:image/png;base64,{chart_b64}"
 
-            # Format greeting based on recipient name
-            greeting = f"Hi {recipient_name}," if recipient_name else "Portfolio Report"
+            # Format greeting based on recipient name and report type
+            if recipient_name:
+                name_part = f"Hi {recipient_name},"
+            else:
+                name_part = "Hi,"
+
+            if report_data["previous"]:
+                # With comparison data - mention the period
+                if report_type == ReportType.DAILY:
+                    period_desc = "here's a recap of account balances that changed yesterday"
+                elif report_type == ReportType.WEEKLY:
+                    period_desc = "here's a recap of changes over the past week"
+                elif report_type == ReportType.MONTHLY:
+                    period_desc = "here's a recap of changes over the past month"
+                elif report_type == ReportType.QUARTERLY:
+                    period_desc = "here's a recap of changes over the past quarter"
+                elif report_type == ReportType.YEARLY:
+                    period_desc = "here's a recap of changes over the past year"
+                else:
+                    period_desc = "here's your portfolio report"
+                greeting = f"{name_part} {period_desc}."
+            else:
+                # No comparison - just show snapshot
+                greeting = f"{name_part} here's a snapshot of your current account balances."
 
             # Sort sheets by total value (descending)
             sorted_sheets = dict(
@@ -747,7 +896,7 @@ Portfolio Data:
                 allocation=allocation,
                 chart_src=chart_src,
                 ai_summary=ai_summary,
-                recipient_name=greeting,
+                greeting=greeting,
                 report_date=datetime.now().strftime("%b %d, %Y"),
                 report_type=report_type_display,
                 format_money=format_money_wrapper,
@@ -901,28 +1050,8 @@ Portfolio Data:
 margin: 0; padding: 20px; background-color: #f5f5f5;">
     <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; \
 padding: 30px;">
-        <h1 style="color: #333; font-size: 24px; margin-bottom: 10px;">{{ recipient_name }}</h1>
-        {% if previous %}
-        <div style="color: #666; font-size: 14px; margin-bottom: 30px;">
-            <strong>{{ report_type }} Report</strong> -
-            {% if report_type == "Daily" %}
-            Here's a recap of account balances that changed yesterday.
-            {% elif report_type == "Weekly" %}
-            Here's a recap of changes over the past week.
-            {% elif report_type == "Monthly" %}
-            Here's a recap of changes over the past month.
-            {% elif report_type == "Quarterly" %}
-            Here's a recap of changes over the past quarter.
-            {% elif report_type == "Yearly" %}
-            Here's a recap of changes over the past year.
-            {% endif %}
-        </div>
-        {% else %}
-        <div style="color: #666; font-size: 14px; margin-bottom: 30px;">
-            <strong>{{ report_type }} Report</strong> - Here's a snapshot of your current
-            account balances.
-        </div>
-        {% endif %}
+        <div style="color: #666; font-size: 18px; margin-bottom: 30px; line-height: 1.6; \
+font-weight: normal;">{{ greeting }}</div>
 
         {% if ai_summary %}
         <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; \
