@@ -86,8 +86,15 @@ class LLMClient:
             AIError: If query fails
         """
         try:
+            # Get currency from snapshot
+            currency = current_snapshot.get("currency", "USD")
+
             # Build context
-            context_parts = ["Current Portfolio Data:", json.dumps(current_snapshot, indent=2)]
+            context_parts = [
+                f"Currency: {currency}",
+                "\nCurrent Portfolio Data:",
+                json.dumps(current_snapshot, indent=2),
+            ]
 
             if report_data and report_data["previous"]:
                 context_parts.extend(
@@ -108,6 +115,7 @@ class LLMClient:
             # Build prompt
             prompt = f"""You are a financial advisor analyzing portfolio data.
 You have access to current and historical portfolio information.
+All monetary amounts are in {currency}.
 
 {context}
 

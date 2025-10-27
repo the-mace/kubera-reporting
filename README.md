@@ -11,6 +11,7 @@ Daily, weekly, monthly, quarterly, and yearly portfolio reporting with AI-powere
 - 📊 **Multi-Period Reports** - Daily, weekly, monthly, quarterly, and yearly portfolio summaries
 - 🤖 **AI Analysis** - Ask questions about your portfolio using natural language
 - 📈 **Change Tracking** - Compare snapshots across different time periods
+- 💱 **Multi-Currency Support** - Works with USD, EUR, GBP, and other currencies
 - 📧 **Email Integration** - Beautiful HTML emails sent via local mail
 - 💾 **Smart Storage** - Intelligent snapshot retention (keeps milestones, cleans up old data)
 - 🎯 **Easy to Use** - Simple CLI interface with automatic milestone detection
@@ -200,6 +201,23 @@ kubera-report send --date 2025-01-15
 # List all snapshots
 kubera-report list-snapshots
 ```
+
+## Multi-Currency Support
+
+Kubera Reporting automatically detects and displays the correct currency symbol based on your portfolio's currency setting in Kubera. The system supports all major currencies including:
+
+- **USD** ($) - US Dollar
+- **EUR** (€) - Euro
+- **GBP** (£) - British Pound
+- **JPY** (¥) - Japanese Yen
+- And many more...
+
+The currency is automatically:
+- Displayed with the correct symbol in reports and CLI output
+- Included in AI analysis prompts for context-aware insights
+- Formatted consistently across HTML emails and console output
+
+No additional configuration needed - the system reads the currency directly from your Kubera portfolio data.
 
 ## Command Reference
 

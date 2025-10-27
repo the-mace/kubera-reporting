@@ -8,6 +8,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from jinja2 import Template
 
+from kubera_reporting import currency_format
 from kubera_reporting.exceptions import ReportGenerationError
 from kubera_reporting.types import (
     AccountDelta,
@@ -569,9 +570,14 @@ class PortfolioReporter:
             # Round allocation percentages to 2 decimal places
             allocation_rounded = {k: round(v, 2) for k, v in allocation.items()}
 
+            # Get currency from report data
+            currency = report_data["current"]["currency"]
+            currency_symbol = currency_format.get_currency_symbol(currency)
+
             if hide_amounts:
                 # Omit dollar amounts, include only percentages
                 portfolio_data = {
+                    "currency": currency,
                     "net_worth": {
                         "change_percent": round(
                             (net_worth_change["amount"] / previous["net_worth"]["amount"] * 100)
@@ -612,16 +618,17 @@ class PortfolioReporter:
                     ],
                 }
 
-                prompt = f"""Analyze this {period} portfolio report. Write 1-2 sentences that:
+                prompt = f"""Analyze this {period} portfolio report (currency: {currency}).
+Write 1-2 sentences that:
 
-1. State what drove the net worth change (use top_dollar_movers - these had the biggest impact)
+1. State what drove the net worth change (use top_dollar_movers - biggest impact)
 2. If any top_percent_movers are NOT already in top_dollar_movers AND have notable % changes \
 (e.g., >5%), briefly mention them as "also notable: [name] moved X%"
 
 Note: "is_holding": true means individual stock/crypto/asset within a larger account.
 
 CRITICAL RULES:
-- Do NOT mention specific dollar amounts - use only percentages
+- Do NOT mention specific amounts - use only percentages
 - Do NOT suggest actions or what to watch
 - Do NOT mention asset allocation (shown in pie chart)
 - ONLY use data provided - do not infer
@@ -630,8 +637,9 @@ CRITICAL RULES:
 Portfolio Data:
 {json.dumps(portfolio_data, indent=2)}"""
             else:
-                # Include full dollar amounts
+                # Include full amounts with currency
                 portfolio_data = {
+                    "currency": currency,
                     "net_worth": {
                         "current": round(report_data["current"]["net_worth"]["amount"], 2),
                         "change": round(net_worth_change["amount"], 2),
@@ -648,11 +656,12 @@ Portfolio Data:
                     "top_debt_movers": top_debt_movers,
                 }
 
-                prompt = f"""Analyze this {period} portfolio report. Write 1-2 sentences that:
+                prompt = f"""Analyze this {period} portfolio report (currency: {currency}).
+Write 1-2 sentences that:
 
-1. State what drove the net worth change (use top_dollar_movers - these had the biggest $ impact)
-2. If any top_percent_movers are NOT already in top_dollar_movers AND have notable % changes \
-(e.g., >5%), briefly mention them as "also notable: [name] moved $X (Y%)"
+1. State what drove the net worth change (use top_dollar_movers - biggest impact)
+2. If any top_percent_movers are NOT in top_dollar_movers AND have notable % changes \
+(e.g., >5%), briefly mention them as "also notable: [name] moved {currency_symbol}X (Y%)"
 
 Note: "is_holding": true means individual stock/crypto/asset within a larger account.
 
@@ -660,7 +669,8 @@ CRITICAL RULES:
 - Do NOT suggest actions or what to watch
 - Do NOT mention asset allocation (shown in pie chart)
 - ONLY use data provided - do not infer
-- Use exact names, dollar amounts, and percentages from the data
+- Use exact names, amounts, and percentages from the data
+- Use {currency_symbol} symbol for amounts (this portfolio uses {currency})
 - Keep factual and brief - max 2 sentences
 
 Portfolio Data:
@@ -908,19 +918,18 @@ Portfolio Data:
             raise ReportGenerationError(f"Failed to generate HTML report: {e}") from e
 
     def _format_money(self, value: MoneyValue, hide_amounts: bool = False) -> str:
-        """Format money value.
+        """Format money value with currency-aware symbols.
 
         Args:
             value: Money value to format
-            hide_amounts: If True, return "$XX" instead of actual amount
+            hide_amounts: If True, return "$XX" or "€XX" instead of actual amount
 
         Returns:
-            Formatted money string
+            Formatted money string like "$1,234" or "€1,234"
         """
-        symbol = "$" if value["currency"] == "USD" else value["currency"]
-        if hide_amounts:
-            return f"{symbol}XX"
-        return f"{symbol}{value['amount']:,.0f}"
+        return currency_format.format_money(
+            value["amount"], value["currency"], hide_amounts=hide_amounts
+        )
 
     def _get_fire_category(self, amount: float) -> str | None:
         """Get FIRE category based on net worth amount.
@@ -967,44 +976,14 @@ Portfolio Data:
         Args:
             change: Money change amount
             change_percent: Optional percentage change
-            hide_amounts: If True, mask dollar amounts but show percentage
+            hide_amounts: If True, mask amounts but show percentage
 
         Returns:
-            Tuple of (formatted_string, color)
+            Tuple of (formatted_string, color) like ("↑ $1,234 (+5.2%)", "#00b383")
         """
-        symbol = "$" if change["currency"] == "USD" else change["currency"]
-        amount = change["amount"]
-
-        # Format the base change amount
-        if amount > 0:
-            if hide_amounts:
-                base_text = f"↑ {symbol}XX"
-            else:
-                base_text = f"↑ {symbol}{amount:,.0f}"
-            color = "#00b383"  # Green with up arrow
-        elif amount < 0:
-            if hide_amounts:
-                base_text = f"↓ {symbol}XX"
-            else:
-                base_text = f"↓ {symbol}{abs(amount):,.0f}"
-            color = "#e63946"  # Red with down arrow
-        else:
-            if hide_amounts:
-                base_text = f"{symbol}XX"
-            else:
-                base_text = f"{symbol}{amount:,.0f}"
-            color = "#666666"  # Gray
-
-        # Add percentage if provided
-        if change_percent is not None:
-            if change_percent > 0:
-                base_text += f" (+{change_percent:.2f}%)"
-            elif change_percent < 0:
-                base_text += f" ({change_percent:.2f}%)"
-            else:
-                base_text += " (0.00%)"
-
-        return base_text, color
+        return currency_format.format_change(
+            change["amount"], change["currency"], change_percent, hide_amounts=hide_amounts
+        )
 
     def _get_html_template(self) -> str:
         """Get HTML email template with inline styles for better forwarding compatibility."""

@@ -9,6 +9,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.table import Table
 
+from kubera_reporting import currency_format
 from kubera_reporting.emailer import EmailSender
 from kubera_reporting.exceptions import KuberaReportingError
 from kubera_reporting.fetcher import KuberaFetcher
@@ -18,6 +19,20 @@ from kubera_reporting.storage import SnapshotStorage
 from kubera_reporting.types import PortfolioSnapshot, ReportType
 
 console = Console()
+
+
+def _format_snapshot_money(snapshot: PortfolioSnapshot, field: str = "net_worth") -> str:
+    """Format money value from snapshot for CLI display.
+
+    Args:
+        snapshot: Portfolio snapshot
+        field: Field to format (net_worth, total_assets, total_debts)
+
+    Returns:
+        Formatted string like "$1,234" or "€1,234"
+    """
+    value = snapshot[field]  # type: ignore
+    return currency_format.format_money(value["amount"], value["currency"])
 
 
 @click.group()
@@ -187,7 +202,7 @@ def report(
         if current_snapshot:
             console.print(
                 "[yellow]Using cached snapshot from today[/yellow] "
-                f"(Net Worth: ${current_snapshot['net_worth']['amount']:,.2f})"
+                f"(Net Worth: {_format_snapshot_money(current_snapshot)})"
             )
             if save_only:
                 console.print(
@@ -204,7 +219,7 @@ def report(
 
             console.print(
                 f"[green]✓[/green] Fetched {current_snapshot['portfolio_name']} "
-                f"(Net Worth: ${current_snapshot['net_worth']['amount']:,.2f})"
+                f"(Net Worth: {_format_snapshot_money(current_snapshot)})"
             )
 
             # Save snapshot
@@ -307,7 +322,7 @@ def show(portfolio_id: str | None, data_dir: str | None, date: str | None) -> No
             if snapshot:
                 console.print(
                     "[yellow]Using cached snapshot from today[/yellow] "
-                    f"(Net Worth: ${snapshot['net_worth']['amount']:,.2f})"
+                    f"(Net Worth: {_format_snapshot_money(snapshot)})"
                 )
             else:
                 # Get portfolio ID from env if not specified
@@ -328,9 +343,9 @@ def show(portfolio_id: str | None, data_dir: str | None, date: str | None) -> No
         # Display snapshot
         console.print(f"\n[bold]{snapshot['portfolio_name']}[/bold]")
         console.print(f"Date: {snapshot['timestamp'][:10]}")
-        console.print(f"\nNet Worth: [bold]${snapshot['net_worth']['amount']:,.2f}[/bold]")
-        console.print(f"Total Assets: ${snapshot['total_assets']['amount']:,.2f}")
-        console.print(f"Total Debts: ${snapshot['total_debts']['amount']:,.2f}")
+        console.print(f"\nNet Worth: [bold]{_format_snapshot_money(snapshot)}[/bold]")
+        console.print(f"Total Assets: {_format_snapshot_money(snapshot, 'total_assets')}")
+        console.print(f"Total Debts: {_format_snapshot_money(snapshot, 'total_debts')}")
 
         # Show top assets
         assets = [a for a in snapshot["accounts"] if a["category"] == "asset"]
@@ -347,7 +362,9 @@ def show(portfolio_id: str | None, data_dir: str | None, date: str | None) -> No
                 table.add_row(
                     asset["name"],
                     asset["institution"] or "-",
-                    f"${asset['value']['amount']:,.2f}",
+                    currency_format.format_money(
+                        asset["value"]["amount"], asset["value"]["currency"]
+                    ),
                 )
 
             console.print(table)
@@ -385,7 +402,7 @@ def query(question: str, portfolio_id: str | None, data_dir: str | None, model: 
         if current_snapshot:
             console.print(
                 "[yellow]Using cached snapshot from today[/yellow] "
-                f"(Net Worth: ${current_snapshot['net_worth']['amount']:,.2f})"
+                f"(Net Worth: {_format_snapshot_money(current_snapshot)})"
             )
         else:
             # Get portfolio ID from env if not specified
@@ -533,7 +550,7 @@ def send(
 
         console.print(
             f"[green]✓[/green] Loaded snapshot for {date} "
-            f"(Net Worth: ${current_snapshot['net_worth']['amount']:,.2f})"
+            f"(Net Worth: {_format_snapshot_money(current_snapshot)})"
         )
 
         # Get email address (not required for dry-run)
@@ -668,7 +685,7 @@ def export(
 
         console.print(
             f"[green]✓[/green] Loaded snapshot for {date} "
-            f"(Net Worth: ${current_snapshot['net_worth']['amount']:,.2f})"
+            f"(Net Worth: {_format_snapshot_money(current_snapshot)})"
         )
 
         # Get recipient name for personalization
