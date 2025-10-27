@@ -1012,8 +1012,61 @@ Portfolio Data:
 <html>
 <head>
     <meta charset="UTF-8">
-    {% if is_export %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        /* Mobile-responsive styles */
+        @media only screen and (max-width: 640px) {
+            .section-header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 8px;
+            }
+            .section-header-title {
+                width: 100%;
+            }
+            .section-header-total {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                font-size: 14px !important;
+            }
+            .sheet-header {
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
+            }
+            .sheet-header-title {
+                width: 100%;
+                display: flex;
+                align-items: center;
+            }
+            .sheet-header-total {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                font-size: 13px !important;
+                padding-left: 20px;
+            }
+            .subsection-header {
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
+            }
+            .subsection-header-title {
+                width: 100%;
+                display: flex;
+                align-items: center;
+            }
+            .subsection-header-total {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+                font-size: 12px !important;
+                padding-left: 20px;
+            }
+        }
+        {% if is_export %}
         .collapsible-header {
             cursor: pointer;
             user-select: none;
@@ -1043,8 +1096,8 @@ Portfolio Data:
         .collapsible-content.expanded {
             display: block;
         }
+        {% endif %}
     </style>
-    {% endif %}
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; \
 margin: 0; padding: 20px; background-color: #f5f5f5;">
@@ -1077,18 +1130,17 @@ margin-bottom: 30px;">
 
         {% if assets_by_sheet %}
         <div style="margin-bottom: 30px;">
-            <div style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; \
-border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: flex; justify-content: \
-space-between; align-items: center;">
-                <span>Assets</span>
-                <span style="font-size: 16px; font-weight: 600;">
-                    Total: {{ format_money(current.total_assets) }}
+            <div class="section-header" style="font-size: 18px; font-weight: 600; color: #333; \
+margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: flex; \
+justify-content: space-between; align-items: center;">
+                <span class="section-header-title">Assets</span>
+                <span class="section-header-total" style="font-size: 16px; font-weight: 600;">
+                    <span>Total: {{ format_money(current.total_assets) }}</span>
                     {% if previous and total_asset_change %}
                     {% set change_text, change_color = format_change(
                         {'amount': total_asset_change, 'currency': current.currency},
                         total_asset_change_percent) %}
-                    <span style="color: {{ change_color }}; margin-left: 10px;">\
-{{ change_text }}</span>
+                    <span style="color: {{ change_color }};">{{ change_text }}</span>
                     {% endif %}
                 </span>
             </div>
@@ -1097,28 +1149,28 @@ space-between; align-items: center;">
             {% set sheet_id = loop.index %}
             <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div {% if is_export %}class="collapsible-header collapsed" \
-onclick="toggleSheet({{ sheet_id }})"{% endif %} \
+                <div {% if is_export %}class="collapsible-header collapsed sheet-header" \
+onclick="toggleSheet({{ sheet_id }})"{% else %}class="sheet-header"{% endif %} \
 style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; \
-padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: flex; \
+justify-content: space-between; align-items: center;">
                     {% if is_export %}<span class="toggle-indicator">▼</span>{% endif %}
-                    <span style="flex: 1;">
+                    <span class="sheet-header-title" style="flex: 1;">
                         {{ sheet_name }}
                         <span style="font-size: 14px; color: #777; font-weight: 500;">
                             ({{ sheet_totals[sheet_name].count }} account\
 {{ 's' if sheet_totals[sheet_name].count != 1 else '' }})
                         </span>
                     </span>
-                    <span style="font-size: 14px; white-space: nowrap;">
-                        {{ format_money({'amount': sheet_totals[sheet_name].total_value, \
-'currency': current.currency}) }}
+                    <span class="sheet-header-total" style="font-size: 14px;">
+                        <span>{{ format_money({'amount': sheet_totals[sheet_name].total_value, \
+'currency': current.currency}) }}</span>
                         {% if previous and sheet_totals[sheet_name].total_change %}
                         {% set sheet_change_text, sheet_change_color = format_change(
                             {'amount': sheet_totals[sheet_name].total_change, \
 'currency': current.currency},
                             sheet_totals[sheet_name].change_percent) %}
-                        <span style="color: {{ sheet_change_color }}; margin-left: 8px; \
-font-size: 13px;">
+                        <span style="color: {{ sheet_change_color }}; font-size: 13px;">
                             {{ sheet_change_text }}
                         </span>
                         {% endif %}
@@ -1133,22 +1185,24 @@ font-size: 13px;">
                         {% set section_id = sheet_id ~ '_' ~ loop.index %}
                         {% set section = section_totals[sheet_name][section_name] %}
                         <div style="margin-left: 15px; margin-top: 15px;">
-                            <div {% if is_export %}class="collapsible-header collapsed" \
-onclick="toggleSection('{{ section_id }}')"{% endif %} \
+                            <div {% if is_export %}\
+class="collapsible-header collapsed subsection-header" \
+onclick="toggleSection('{{ section_id }}')"{% else %}class="subsection-header"{% endif %} \
 style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; \
-padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
+padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; display: flex; \
+justify-content: space-between; align-items: center;">
                                 {% if is_export %}<span class="toggle-indicator">▼</span>\
 {% endif %}
-                                <span style="flex: 1;">
+                                <span class="subsection-header-title" style="flex: 1;">
                                     {{ section_name }}
                                     <span style="font-size: 13px; color: #888; font-weight: 500;">
                                         ({{ section.count }} account\
 {{ 's' if section.count != 1 else '' }})
                                     </span>
                                 </span>
-                                <span style="font-size: 13px; white-space: nowrap;">
-                                    {{ format_money({'amount': section.total_value, \
-'currency': current.currency}) }}
+                                <span class="subsection-header-total" style="font-size: 13px;">
+                                    <span>{{ format_money({'amount': section.total_value, \
+'currency': current.currency}) }}</span>
                                     {% if previous and section.total_change %}
                                     {% set section_change_text, section_change_color = \
 format_change(
@@ -1156,7 +1210,7 @@ format_change(
 'currency': current.currency},
                                         section.change_percent) %}
                                     <span style="color: {{ section_change_color }}; \
-margin-left: 6px; font-size: 12px;">
+font-size: 12px;">
                                         {{ section_change_text }}
                                     </span>
                                     {% endif %}
@@ -1228,18 +1282,17 @@ color: {{ change_color }};">{{ change_text }}</div>
 
         {% if debt_movers %}
         <div style="margin-bottom: 30px;">
-            <div style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; \
-border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: flex; justify-content: \
-space-between; align-items: center;">
-                <span>Liabilities</span>
-                <span style="font-size: 16px; font-weight: 600;">
-                    Total: {{ format_money(current.total_debts) }}
+            <div class="section-header" style="font-size: 18px; font-weight: 600; color: #333; \
+margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: flex; \
+justify-content: space-between; align-items: center;">
+                <span class="section-header-title">Liabilities</span>
+                <span class="section-header-total" style="font-size: 16px; font-weight: 600;">
+                    <span>Total: {{ format_money(current.total_debts) }}</span>
                     {% if previous and total_debt_change %}
                     {% set change_text, change_color = format_change(
                         {'amount': total_debt_change, 'currency': current.currency},
                         total_debt_change_percent) %}
-                    <span style="color: {{ change_color }}; margin-left: 10px;">\
-{{ change_text }}</span>
+                    <span style="color: {{ change_color }};">{{ change_text }}</span>
                     {% endif %}
                 </span>
             </div>

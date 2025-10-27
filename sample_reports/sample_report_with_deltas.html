@@ -2,7 +2,62 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Mobile-responsive styles */
+        @media only screen and (max-width: 640px) {
+            .section-header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 8px;
+            }
+            .section-header-title {
+                width: 100%;
+            }
+            .section-header-total {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                font-size: 14px !important;
+            }
+            .sheet-header {
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
+            }
+            .sheet-header-title {
+                width: 100%;
+                display: flex;
+                align-items: center;
+            }
+            .sheet-header-total {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                font-size: 13px !important;
+                padding-left: 20px;
+            }
+            .subsection-header {
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
+            }
+            .subsection-header-title {
+                width: 100%;
+                display: flex;
+                align-items: center;
+            }
+            .subsection-header-total {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+                font-size: 12px !important;
+                padding-left: 20px;
+            }
+        }
+        
+    </style>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5;">
     <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; padding: 30px;">
@@ -11,7 +66,7 @@
         
         <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #00b383;">
             <div style="color: #666; font-size: 12px; font-weight: 600; margin-bottom: 8px;">AI INSIGHTS</div>
-            <div style="color: #333; font-size: 14px; line-height: 1.6;">The net worth increased by $6205 (0.46%), driven by a $2400 gain (1.19%) in the Retirement Account - 401k - 9999, a $1575 gain (1.43%) in the Investment Account - Stocks - 1234, and a $3125 loss (-12.5%) in the Crypto Wallet.</div>
+            <div style="color: #333; font-size: 14px; line-height: 1.6;">The net worth increased by $6205 (0.46%), primarily driven by a $2400 gain in the Retirement Account - 401k - 9999 and a $1575 gain in the Investment Account - Stocks - 1234, offset by a $3125 loss in the Crypto Wallet.</div>
         </div>
         
 
@@ -26,13 +81,13 @@
 
         
         <div style="margin-bottom: 30px;">
-            <div style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                <span>Assets</span>
-                <span style="font-size: 16px; font-weight: 600;">
-                    Total: $1,799,125
+            <div class="section-header" style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <span class="section-header-title">Assets</span>
+                <span class="section-header-total" style="font-size: 16px; font-weight: 600;">
+                    <span>Total: $1,799,125</span>
                     
                     
-                    <span style="color: #00b383; margin-left: 10px;">↑ $1,775 (+0.10%)</span>
+                    <span style="color: #00b383;">↑ $1,775 (+0.10%)</span>
                     
                 </span>
             </div>
@@ -41,19 +96,19 @@
             
             <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div  style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                <div class="sheet-header" style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
                     
-                    <span style="flex: 1;">
+                    <span class="sheet-header-title" style="flex: 1;">
                         Retirement
                         <span style="font-size: 14px; color: #777; font-weight: 500;">
                             (1 account)
                         </span>
                     </span>
-                    <span style="font-size: 14px; white-space: nowrap;">
-                        $203,400
+                    <span class="sheet-header-total" style="font-size: 14px;">
+                        <span>$203,400</span>
                         
                         
-                        <span style="color: #00b383; margin-left: 8px; font-size: 13px;">
+                        <span style="color: #00b383; font-size: 13px;">
                             ↑ $2,400 (+1.19%)
                         </span>
                         
@@ -91,19 +146,19 @@
             
             <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div  style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                <div class="sheet-header" style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
                     
-                    <span style="flex: 1;">
+                    <span class="sheet-header-title" style="flex: 1;">
                         Investments
                         <span style="font-size: 14px; color: #777; font-weight: 500;">
                             (2 accounts)
                         </span>
                     </span>
-                    <span style="font-size: 14px; white-space: nowrap;">
-                        $188,950
+                    <span class="sheet-header-total" style="font-size: 14px;">
+                        <span>$188,950</span>
                         
                         
-                        <span style="color: #00b383; margin-left: 8px; font-size: 13px;">
+                        <span style="color: #00b383; font-size: 13px;">
                             ↑ $1,950 (+1.04%)
                         </span>
                         
@@ -118,19 +173,19 @@
                         
                         
                         <div style="margin-left: 15px; margin-top: 15px;">
-                            <div  style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
+                            <div class="subsection-header" style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
                                 
-                                <span style="flex: 1;">
+                                <span class="subsection-header-title" style="flex: 1;">
                                     Taxable
                                     <span style="font-size: 13px; color: #888; font-weight: 500;">
                                         (1 account)
                                     </span>
                                 </span>
-                                <span style="font-size: 13px; white-space: nowrap;">
-                                    $111,575
+                                <span class="subsection-header-total" style="font-size: 13px;">
+                                    <span>$111,575</span>
                                     
                                     
-                                    <span style="color: #00b383; margin-left: 6px; font-size: 12px;">
+                                    <span style="color: #00b383; font-size: 12px;">
                                         ↑ $1,575 (+1.43%)
                                     </span>
                                     
@@ -163,19 +218,19 @@
                         
                         
                         <div style="margin-left: 15px; margin-top: 15px;">
-                            <div  style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
+                            <div class="subsection-header" style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
                                 
-                                <span style="flex: 1;">
+                                <span class="subsection-header-title" style="flex: 1;">
                                     Tax Deferred
                                     <span style="font-size: 13px; color: #888; font-weight: 500;">
                                         (1 account)
                                     </span>
                                 </span>
-                                <span style="font-size: 13px; white-space: nowrap;">
-                                    $77,375
+                                <span class="subsection-header-total" style="font-size: 13px;">
+                                    <span>$77,375</span>
                                     
                                     
-                                    <span style="color: #00b383; margin-left: 6px; font-size: 12px;">
+                                    <span style="color: #00b383; font-size: 12px;">
                                         ↑ $375 (+0.49%)
                                     </span>
                                     
@@ -212,16 +267,16 @@
             
             <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div  style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                <div class="sheet-header" style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
                     
-                    <span style="flex: 1;">
+                    <span class="sheet-header-title" style="flex: 1;">
                         Vehicles
                         <span style="font-size: 14px; color: #777; font-weight: 500;">
                             (2 accounts)
                         </span>
                     </span>
-                    <span style="font-size: 14px; white-space: nowrap;">
-                        $77,000
+                    <span class="sheet-header-total" style="font-size: 14px;">
+                        <span>$77,000</span>
                         
                     </span>
                 </div>
@@ -269,19 +324,19 @@
             
             <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div  style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                <div class="sheet-header" style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
                     
-                    <span style="flex: 1;">
+                    <span class="sheet-header-title" style="flex: 1;">
                         Banks
                         <span style="font-size: 14px; color: #777; font-weight: 500;">
                             (2 accounts)
                         </span>
                     </span>
-                    <span style="font-size: 14px; white-space: nowrap;">
-                        $65,550
+                    <span class="sheet-header-total" style="font-size: 14px;">
+                        <span>$65,550</span>
                         
                         
-                        <span style="color: #00b383; margin-left: 8px; font-size: 13px;">
+                        <span style="color: #00b383; font-size: 13px;">
                             ↑ $550 (+0.85%)
                         </span>
                         
@@ -296,19 +351,19 @@
                         
                         
                         <div style="margin-left: 15px; margin-top: 15px;">
-                            <div  style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
+                            <div class="subsection-header" style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
                                 
-                                <span style="flex: 1;">
+                                <span class="subsection-header-title" style="flex: 1;">
                                     Checking
                                     <span style="font-size: 13px; color: #888; font-weight: 500;">
                                         (1 account)
                                     </span>
                                 </span>
-                                <span style="font-size: 13px; white-space: nowrap;">
-                                    $15,500
+                                <span class="subsection-header-total" style="font-size: 13px;">
+                                    <span>$15,500</span>
                                     
                                     
-                                    <span style="color: #00b383; margin-left: 6px; font-size: 12px;">
+                                    <span style="color: #00b383; font-size: 12px;">
                                         ↑ $500 (+3.33%)
                                     </span>
                                     
@@ -341,19 +396,19 @@
                         
                         
                         <div style="margin-left: 15px; margin-top: 15px;">
-                            <div  style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;">
+                            <div class="subsection-header" style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
                                 
-                                <span style="flex: 1;">
+                                <span class="subsection-header-title" style="flex: 1;">
                                     Savings
                                     <span style="font-size: 13px; color: #888; font-weight: 500;">
                                         (1 account)
                                     </span>
                                 </span>
-                                <span style="font-size: 13px; white-space: nowrap;">
-                                    $50,050
+                                <span class="subsection-header-total" style="font-size: 13px;">
+                                    <span>$50,050</span>
                                     
                                     
-                                    <span style="color: #00b383; margin-left: 6px; font-size: 12px;">
+                                    <span style="color: #00b383; font-size: 12px;">
                                         ↑ $50 (+0.10%)
                                     </span>
                                     
@@ -390,19 +445,19 @@
             
             <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div  style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0;">
+                <div class="sheet-header" style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
                     
-                    <span style="flex: 1;">
+                    <span class="sheet-header-title" style="flex: 1;">
                         Crypto
                         <span style="font-size: 14px; color: #777; font-weight: 500;">
                             (1 account)
                         </span>
                     </span>
-                    <span style="font-size: 14px; white-space: nowrap;">
-                        $21,875
+                    <span class="sheet-header-total" style="font-size: 14px;">
+                        <span>$21,875</span>
                         
                         
-                        <span style="color: #e63946; margin-left: 8px; font-size: 13px;">
+                        <span style="color: #e63946; font-size: 13px;">
                             ↓ $3,125 (-12.50%)
                         </span>
                         
@@ -442,13 +497,13 @@
 
         
         <div style="margin-bottom: 30px;">
-            <div style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                <span>Liabilities</span>
-                <span style="font-size: 16px; font-weight: 600;">
-                    Total: $439,920
+            <div class="section-header" style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <span class="section-header-title">Liabilities</span>
+                <span class="section-header-total" style="font-size: 16px; font-weight: 600;">
+                    <span>Total: $439,920</span>
                     
                     
-                    <span style="color: #e63946; margin-left: 10px;">↓ $80 (-0.02%)</span>
+                    <span style="color: #e63946;">↓ $80 (-0.02%)</span>
                     
                 </span>
             </div>
@@ -498,7 +553,7 @@
         
 
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #999; font-size: 12px; text-align: center;">
-            Report generated on Oct 26, 2025<br>
+            Report generated on Oct 27, 2025<br>
             <a href="https://github.com/the-mace/kubera-reporting" style="color: #0066cc; text-decoration: none;">kubera-reporting on GitHub</a>
         </div>
     </div>
