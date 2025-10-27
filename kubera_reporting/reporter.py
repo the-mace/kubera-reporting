@@ -619,20 +619,25 @@ class PortfolioReporter:
                 }
 
                 prompt = f"""Analyze this {period} portfolio report (currency: {currency}).
-Write 1-2 sentences that:
 
-1. State what drove the net worth change (use top_dollar_movers - biggest impact)
-2. If any top_percent_movers are NOT already in top_dollar_movers AND have notable % changes \
-(e.g., >5%), briefly mention them as "also notable: [name] moved X%"
+Format your response as:
+1. First sentence: Overall net worth change summary (percentage only)
+2. Blank line
+3. "Key drivers:" followed by bullet points for top_dollar_movers (biggest impact on net worth)
+4. If any top_percent_movers are NOT in top_dollar_movers AND have notable % changes (>5%):
+   - Blank line
+   - "Also notable:" followed by bullet points for those percentage movers
 
 Note: "is_holding": true means individual stock/crypto/asset within a larger account.
 
 CRITICAL RULES:
 - Do NOT mention specific amounts - use only percentages
+- Format bullets with "• " character
 - Do NOT suggest actions or what to watch
 - Do NOT mention asset allocation (shown in pie chart)
 - ONLY use data provided - do not infer
-- Keep factual and brief - max 2 sentences
+- Keep factual and concise
+- Only include "Also notable:" section if there are items to show
 
 Portfolio Data:
 {json.dumps(portfolio_data, indent=2)}"""
@@ -657,21 +662,28 @@ Portfolio Data:
                 }
 
                 prompt = f"""Analyze this {period} portfolio report (currency: {currency}).
-Write 1-2 sentences that:
 
-1. State what drove the net worth change (use top_dollar_movers - biggest impact)
-2. If any top_percent_movers are NOT in top_dollar_movers AND have notable % changes \
-(e.g., >5%), briefly mention them as "also notable: [name] moved {currency_symbol}X (Y%)"
+Format your response as:
+1. First sentence: Overall net worth change summary
+2. Blank line
+3. "Key drivers:" followed by bullet points for top_dollar_movers (biggest impact on net worth)
+4. If any top_percent_movers are NOT in top_dollar_movers AND have notable % changes (>5%):
+   - Blank line
+   - "Also notable:" followed by bullet points for those percentage movers
 
 Note: "is_holding": true means individual stock/crypto/asset within a larger account.
 
 CRITICAL RULES:
+- Use exact names from the data
+- Use {currency_symbol} symbol for amounts (this portfolio uses {currency})
+- Format amounts WITHOUT decimals (e.g., {currency_symbol}1,234 not {currency_symbol}1,234.56)
+- Format percentages with 2 decimal places (e.g., 5.13%)
+- Format bullets with "• " character
 - Do NOT suggest actions or what to watch
 - Do NOT mention asset allocation (shown in pie chart)
 - ONLY use data provided - do not infer
-- Use exact names, amounts, and percentages from the data
-- Use {currency_symbol} symbol for amounts (this portfolio uses {currency})
-- Keep factual and brief - max 2 sentences
+- Keep factual and concise
+- Only include "Also notable:" section if there are items to show
 
 Portfolio Data:
 {json.dumps(portfolio_data, indent=2)}"""
@@ -1090,7 +1102,8 @@ font-weight: normal;">{{ greeting }}</div>
 margin-bottom: 20px; border-left: 4px solid #00b383;">
             <div style="color: #666; font-size: 12px; font-weight: 600; \
 margin-bottom: 8px;">AI INSIGHTS</div>
-            <div style="color: #333; font-size: 14px; line-height: 1.6;">{{ ai_summary }}</div>
+            <div style="color: #333; font-size: 14px; line-height: 1.6; white-space: pre-line;">\
+{{ ai_summary }}</div>
         </div>
         {% endif %}
 
