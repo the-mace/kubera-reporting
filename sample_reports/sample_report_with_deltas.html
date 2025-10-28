@@ -4,73 +4,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        /* Mobile-responsive styles */
+        /* Mobile-responsive styles - uses !important to override inline styles */
+        /* Note: Not all email clients support media queries (e.g., Outlook) */
+        /* Inline styles below are mobile-first for graceful degradation */
         @media only screen and (max-width: 640px) {
-            .section-header {
-                flex-direction: column !important;
-                align-items: flex-start !important;
-                gap: 8px;
+            body {
+                padding: 10px !important;
+            }
+            .email-container {
+                padding: 20px !important;
+            }
+            .section-header-row {
+                display: block !important;
             }
             .section-header-title {
-                width: 100%;
+                display: block !important;
+                margin-bottom: 8px;
             }
             .section-header-total {
-                width: 100%;
-                display: flex;
-                flex-direction: column;
-                gap: 4px;
+                display: block !important;
+                text-align: left !important;
                 font-size: 14px !important;
             }
-            .sheet-header {
-                flex-direction: row !important;
-                flex-wrap: wrap !important;
+            .section-header-total > div {
+                display: block;
+                margin-bottom: 4px;
+            }
+            .sheet-header-row {
+                display: block !important;
             }
             .sheet-header-title {
-                width: 100%;
-                display: flex;
-                align-items: center;
+                display: block !important;
+                margin-bottom: 6px;
             }
             .sheet-header-total {
-                width: 100%;
-                display: flex;
-                flex-direction: column;
-                gap: 3px;
-                font-size: 13px !important;
+                display: block !important;
+                text-align: left !important;
                 padding-left: 20px;
+                font-size: 13px !important;
             }
-            .subsection-header {
-                flex-direction: row !important;
-                flex-wrap: wrap !important;
+            .sheet-header-total > div {
+                display: block;
+                margin-bottom: 3px;
+            }
+            .subsection-header-row {
+                display: block !important;
             }
             .subsection-header-title {
-                width: 100%;
-                display: flex;
-                align-items: center;
+                display: block !important;
+                margin-bottom: 5px;
             }
             .subsection-header-total {
-                width: 100%;
-                display: flex;
-                flex-direction: column;
-                gap: 2px;
-                font-size: 12px !important;
+                display: block !important;
+                text-align: left !important;
                 padding-left: 20px;
+                font-size: 12px !important;
+            }
+            .subsection-header-total > div {
+                display: block;
+                margin-bottom: 2px;
+            }
+            .account-row {
+                display: block !important;
+            }
+            .account-name {
+                display: block !important;
+                margin-bottom: 6px;
+            }
+            .account-value {
+                display: block !important;
+                text-align: left !important;
             }
         }
         
     </style>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5;">
-    <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; padding: 30px;">
-        <div style="color: #666; font-size: 18px; margin-bottom: 30px; line-height: 1.6; font-weight: normal;">Hi Test User, here's a recap of account balances that changed yesterday.</div>
+    <div class="email-container" style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; padding: 30px;">
+        <div style="color: #666; font-size: 18px; margin-bottom: 30px; line-height: 1.6; font-weight: normal;">Hi Investor, here's a recap of account balances that changed yesterday.</div>
 
         
         <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #00b383;">
             <div style="color: #666; font-size: 12px; font-weight: 600; margin-bottom: 8px;">AI INSIGHTS</div>
-            <div style="color: #333; font-size: 14px; line-height: 1.6; white-space: pre-line;">Your portfolio grew by $6,205 (0.46%) primarily driven by positive equity markets and retirement fund performance. The Retirement Account gained $2,400 (1.2%) and Investment Account - Stocks rose $1,575 (1.5%), reflecting broad market strength. However, Crypto Wallet declined significantly by $3,125 (-12.5%), highlighting continued volatility in digital assets.
-
-Watch the crypto allocation carefully - at 12.5% decline in a single day, this asset class is experiencing elevated volatility. Consider whether your overall crypto exposure aligns with your risk tolerance. The modest debt reduction ($80 across mortgage and auto loan) continues to improve your leverage position incrementally.
-
-Action: Review your crypto holdings as part of next portfolio rebalancing - the 12.5% daily swing suggests this allocation may warrant adjustment based on your risk profile.</div>
+            <div style="color: #333; font-size: 14px; line-height: 1.6;">The portfolio's net worth increased by $6,205 to $1,359,205, a 0.46% change.<br><br>Key drivers:<br>• Crypto Wallet decreased by $3,125 (-12.50%)<br>• Retirement Account - 401k - 9999 increased by $2,400 (1.19%)<br>• Investment Account - Stocks - 1234 increased by $1,575 (1.43%)</div>
         </div>
         
 
@@ -85,38 +101,40 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
 
         
         <div style="margin-bottom: 30px;">
-            <div class="section-header" style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                <span class="section-header-title">Assets</span>
-                <span class="section-header-total" style="font-size: 16px; font-weight: 600;">
-                    <span>Total: $1,799,125</span>
+            <div class="section-header-row" style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: table; width: 100%;">
+                <div class="section-header-title" style="display: table-cell; vertical-align: middle;">
+                    Assets
+                </div>
+                <div class="section-header-total" style="display: table-cell; vertical-align: middle; text-align: right; font-size: 16px; font-weight: 600; white-space: nowrap;">
+                    <div>Total: $1,799,125</div>
                     
                     
-                    <span style="color: #00b383;">↑ $1,775 (+0.10%)</span>
+                    <div style="color: #00b383;">↑ $1,775 (+0.10%)</div>
                     
-                </span>
+                </div>
             </div>
 
             
             
             <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div class="sheet-header" style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
-                    
-                    <span class="sheet-header-title" style="flex: 1;">
+                <div class="sheet-header-row" style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: table; width: 100%;">
+                    <div class="sheet-header-title" style="display: table-cell; vertical-align: middle;">
+                        
                         Retirement
                         <span style="font-size: 14px; color: #777; font-weight: 500;">
                             (1 account)
                         </span>
-                    </span>
-                    <span class="sheet-header-total" style="font-size: 14px;">
-                        <span>$203,400</span>
+                    </div>
+                    <div class="sheet-header-total" style="display: table-cell; vertical-align: middle; text-align: right; font-size: 14px; white-space: nowrap;">
+                        <div>$203,400</div>
                         
                         
-                        <span style="color: #00b383; font-size: 13px;">
+                        <div style="color: #00b383; font-size: 13px;">
                             ↑ $2,400 (+1.19%)
-                        </span>
+                        </div>
                         
-                    </span>
+                    </div>
                 </div>
 
                 <!-- Sheet content (collapsible in export mode) -->
@@ -126,14 +144,14 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
                         <!-- Single section: skip section header, show accounts directly -->
                         
                             
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                                <div style="flex: 1;">
+                            <div class="account-row" style="display: table; width: 100%; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                                <div class="account-name" style="display: table-cell; vertical-align: middle;">
                                     <div style="font-weight: 500; color: #333;">Retirement Account - 401k - 9999</div>
                                     
                                     <div style="font-size: 12px; color: #999;">Retirement Firm B</div>
                                     
                                 </div>
-                                <div style="text-align: right;">
+                                <div class="account-value" style="display: table-cell; vertical-align: middle; text-align: right; white-space: nowrap;">
                                     <div style="font-weight: 600; color: #333;">$203,400</div>
                                     
                                     
@@ -150,23 +168,23 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
             
             <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div class="sheet-header" style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
-                    
-                    <span class="sheet-header-title" style="flex: 1;">
+                <div class="sheet-header-row" style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: table; width: 100%;">
+                    <div class="sheet-header-title" style="display: table-cell; vertical-align: middle;">
+                        
                         Investments
                         <span style="font-size: 14px; color: #777; font-weight: 500;">
                             (2 accounts)
                         </span>
-                    </span>
-                    <span class="sheet-header-total" style="font-size: 14px;">
-                        <span>$188,950</span>
+                    </div>
+                    <div class="sheet-header-total" style="display: table-cell; vertical-align: middle; text-align: right; font-size: 14px; white-space: nowrap;">
+                        <div>$188,950</div>
                         
                         
-                        <span style="color: #00b383; font-size: 13px;">
+                        <div style="color: #00b383; font-size: 13px;">
                             ↑ $1,950 (+1.04%)
-                        </span>
+                        </div>
                         
-                    </span>
+                    </div>
                 </div>
 
                 <!-- Sheet content (collapsible in export mode) -->
@@ -177,37 +195,37 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
                         
                         
                         <div style="margin-left: 15px; margin-top: 15px;">
-                            <div class="subsection-header" style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
-                                
-                                <span class="subsection-header-title" style="flex: 1;">
+                            <div class="subsection-header-row" style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; display: table; width: 100%;">
+                                <div class="subsection-header-title" style="display: table-cell; vertical-align: middle;">
+                                    
                                     Taxable
                                     <span style="font-size: 13px; color: #888; font-weight: 500;">
                                         (1 account)
                                     </span>
-                                </span>
-                                <span class="subsection-header-total" style="font-size: 13px;">
-                                    <span>$111,575</span>
+                                </div>
+                                <div class="subsection-header-total" style="display: table-cell; vertical-align: middle; text-align: right; font-size: 13px; white-space: nowrap;">
+                                    <div>$111,575</div>
                                     
                                     
-                                    <span style="color: #00b383; font-size: 12px;">
+                                    <div style="color: #00b383; font-size: 12px;">
                                         ↑ $1,575 (+1.43%)
-                                    </span>
+                                    </div>
                                     
-                                </span>
+                                </div>
                             </div>
 
                             <!-- Section content (collapsible in export mode) -->
                             <div id="section-2_1" class="collapsible-content">
                                 <!-- Individual accounts within section -->
                                 
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
-                                    <div style="flex: 1;">
+                                <div class="account-row" style="display: table; width: 100%; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
+                                    <div class="account-name" style="display: table-cell; vertical-align: middle;">
                                         <div style="font-weight: 500; color: #333; font-size: 13px;">Investment Account - Stocks - 1234</div>
                                         
                                         <div style="font-size: 11px; color: #999;">Investment Firm A</div>
                                         
                                     </div>
-                                    <div style="text-align: right;">
+                                    <div class="account-value" style="display: table-cell; vertical-align: middle; text-align: right; white-space: nowrap;">
                                         <div style="font-weight: 600; color: #333; font-size: 13px;">$111,575</div>
                                         
                                         
@@ -222,37 +240,37 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
                         
                         
                         <div style="margin-left: 15px; margin-top: 15px;">
-                            <div class="subsection-header" style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
-                                
-                                <span class="subsection-header-title" style="flex: 1;">
+                            <div class="subsection-header-row" style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; display: table; width: 100%;">
+                                <div class="subsection-header-title" style="display: table-cell; vertical-align: middle;">
+                                    
                                     Tax Deferred
                                     <span style="font-size: 13px; color: #888; font-weight: 500;">
                                         (1 account)
                                     </span>
-                                </span>
-                                <span class="subsection-header-total" style="font-size: 13px;">
-                                    <span>$77,375</span>
+                                </div>
+                                <div class="subsection-header-total" style="display: table-cell; vertical-align: middle; text-align: right; font-size: 13px; white-space: nowrap;">
+                                    <div>$77,375</div>
                                     
                                     
-                                    <span style="color: #00b383; font-size: 12px;">
+                                    <div style="color: #00b383; font-size: 12px;">
                                         ↑ $375 (+0.49%)
-                                    </span>
+                                    </div>
                                     
-                                </span>
+                                </div>
                             </div>
 
                             <!-- Section content (collapsible in export mode) -->
                             <div id="section-2_2" class="collapsible-content">
                                 <!-- Individual accounts within section -->
                                 
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
-                                    <div style="flex: 1;">
+                                <div class="account-row" style="display: table; width: 100%; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
+                                    <div class="account-name" style="display: table-cell; vertical-align: middle;">
                                         <div style="font-weight: 500; color: #333; font-size: 13px;">Investment Account - Bonds - 5678</div>
                                         
                                         <div style="font-size: 11px; color: #999;">Investment Firm A</div>
                                         
                                     </div>
-                                    <div style="text-align: right;">
+                                    <div class="account-value" style="display: table-cell; vertical-align: middle; text-align: right; white-space: nowrap;">
                                         <div style="font-weight: 600; color: #333; font-size: 13px;">$77,375</div>
                                         
                                         
@@ -271,18 +289,18 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
             
             <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div class="sheet-header" style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
-                    
-                    <span class="sheet-header-title" style="flex: 1;">
+                <div class="sheet-header-row" style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: table; width: 100%;">
+                    <div class="sheet-header-title" style="display: table-cell; vertical-align: middle;">
+                        
                         Vehicles
                         <span style="font-size: 14px; color: #777; font-weight: 500;">
                             (2 accounts)
                         </span>
-                    </span>
-                    <span class="sheet-header-total" style="font-size: 14px;">
-                        <span>$77,000</span>
+                    </div>
+                    <div class="sheet-header-total" style="display: table-cell; vertical-align: middle; text-align: right; font-size: 14px; white-space: nowrap;">
+                        <div>$77,000</div>
                         
-                    </span>
+                    </div>
                 </div>
 
                 <!-- Sheet content (collapsible in export mode) -->
@@ -292,12 +310,12 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
                         <!-- Single section: skip section header, show accounts directly -->
                         
                             
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                                <div style="flex: 1;">
+                            <div class="account-row" style="display: table; width: 100%; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                                <div class="account-name" style="display: table-cell; vertical-align: middle;">
                                     <div style="font-weight: 500; color: #333;">Vehicle 1</div>
                                     
                                 </div>
-                                <div style="text-align: right;">
+                                <div class="account-value" style="display: table-cell; vertical-align: middle; text-align: right; white-space: nowrap;">
                                     <div style="font-weight: 600; color: #333;">$45,000</div>
                                     
                                     
@@ -306,12 +324,12 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
                                 </div>
                             </div>
                             
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                                <div style="flex: 1;">
+                            <div class="account-row" style="display: table; width: 100%; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                                <div class="account-name" style="display: table-cell; vertical-align: middle;">
                                     <div style="font-weight: 500; color: #333;">Vehicle 2</div>
                                     
                                 </div>
-                                <div style="text-align: right;">
+                                <div class="account-value" style="display: table-cell; vertical-align: middle; text-align: right; white-space: nowrap;">
                                     <div style="font-weight: 600; color: #333;">$32,000</div>
                                     
                                     
@@ -328,23 +346,23 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
             
             <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div class="sheet-header" style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
-                    
-                    <span class="sheet-header-title" style="flex: 1;">
+                <div class="sheet-header-row" style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: table; width: 100%;">
+                    <div class="sheet-header-title" style="display: table-cell; vertical-align: middle;">
+                        
                         Banks
                         <span style="font-size: 14px; color: #777; font-weight: 500;">
                             (2 accounts)
                         </span>
-                    </span>
-                    <span class="sheet-header-total" style="font-size: 14px;">
-                        <span>$65,550</span>
+                    </div>
+                    <div class="sheet-header-total" style="display: table-cell; vertical-align: middle; text-align: right; font-size: 14px; white-space: nowrap;">
+                        <div>$65,550</div>
                         
                         
-                        <span style="color: #00b383; font-size: 13px;">
+                        <div style="color: #00b383; font-size: 13px;">
                             ↑ $550 (+0.85%)
-                        </span>
+                        </div>
                         
-                    </span>
+                    </div>
                 </div>
 
                 <!-- Sheet content (collapsible in export mode) -->
@@ -355,37 +373,37 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
                         
                         
                         <div style="margin-left: 15px; margin-top: 15px;">
-                            <div class="subsection-header" style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
-                                
-                                <span class="subsection-header-title" style="flex: 1;">
+                            <div class="subsection-header-row" style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; display: table; width: 100%;">
+                                <div class="subsection-header-title" style="display: table-cell; vertical-align: middle;">
+                                    
                                     Checking
                                     <span style="font-size: 13px; color: #888; font-weight: 500;">
                                         (1 account)
                                     </span>
-                                </span>
-                                <span class="subsection-header-total" style="font-size: 13px;">
-                                    <span>$15,500</span>
+                                </div>
+                                <div class="subsection-header-total" style="display: table-cell; vertical-align: middle; text-align: right; font-size: 13px; white-space: nowrap;">
+                                    <div>$15,500</div>
                                     
                                     
-                                    <span style="color: #00b383; font-size: 12px;">
+                                    <div style="color: #00b383; font-size: 12px;">
                                         ↑ $500 (+3.33%)
-                                    </span>
+                                    </div>
                                     
-                                </span>
+                                </div>
                             </div>
 
                             <!-- Section content (collapsible in export mode) -->
                             <div id="section-4_1" class="collapsible-content">
                                 <!-- Individual accounts within section -->
                                 
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
-                                    <div style="flex: 1;">
+                                <div class="account-row" style="display: table; width: 100%; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
+                                    <div class="account-name" style="display: table-cell; vertical-align: middle;">
                                         <div style="font-weight: 500; color: #333; font-size: 13px;">Checking Account</div>
                                         
                                         <div style="font-size: 11px; color: #999;">First National Bank</div>
                                         
                                     </div>
-                                    <div style="text-align: right;">
+                                    <div class="account-value" style="display: table-cell; vertical-align: middle; text-align: right; white-space: nowrap;">
                                         <div style="font-weight: 600; color: #333; font-size: 13px;">$15,500</div>
                                         
                                         
@@ -400,37 +418,37 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
                         
                         
                         <div style="margin-left: 15px; margin-top: 15px;">
-                            <div class="subsection-header" style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
-                                
-                                <span class="subsection-header-title" style="flex: 1;">
+                            <div class="subsection-header-row" style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; display: table; width: 100%;">
+                                <div class="subsection-header-title" style="display: table-cell; vertical-align: middle;">
+                                    
                                     Savings
                                     <span style="font-size: 13px; color: #888; font-weight: 500;">
                                         (1 account)
                                     </span>
-                                </span>
-                                <span class="subsection-header-total" style="font-size: 13px;">
-                                    <span>$50,050</span>
+                                </div>
+                                <div class="subsection-header-total" style="display: table-cell; vertical-align: middle; text-align: right; font-size: 13px; white-space: nowrap;">
+                                    <div>$50,050</div>
                                     
                                     
-                                    <span style="color: #00b383; font-size: 12px;">
+                                    <div style="color: #00b383; font-size: 12px;">
                                         ↑ $50 (+0.10%)
-                                    </span>
+                                    </div>
                                     
-                                </span>
+                                </div>
                             </div>
 
                             <!-- Section content (collapsible in export mode) -->
                             <div id="section-4_2" class="collapsible-content">
                                 <!-- Individual accounts within section -->
                                 
-                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
-                                    <div style="flex: 1;">
+                                <div class="account-row" style="display: table; width: 100%; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
+                                    <div class="account-name" style="display: table-cell; vertical-align: middle;">
                                         <div style="font-weight: 500; color: #333; font-size: 13px;">Savings Account</div>
                                         
                                         <div style="font-size: 11px; color: #999;">First National Bank</div>
                                         
                                     </div>
-                                    <div style="text-align: right;">
+                                    <div class="account-value" style="display: table-cell; vertical-align: middle; text-align: right; white-space: nowrap;">
                                         <div style="font-weight: 600; color: #333; font-size: 13px;">$50,050</div>
                                         
                                         
@@ -449,23 +467,23 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
             
             <div style="margin-top: 20px;" class="sheet-container">
                 <!-- Sheet-level header -->
-                <div class="sheet-header" style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
-                    
-                    <span class="sheet-header-title" style="flex: 1;">
+                <div class="sheet-header-row" style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: table; width: 100%;">
+                    <div class="sheet-header-title" style="display: table-cell; vertical-align: middle;">
+                        
                         Crypto
                         <span style="font-size: 14px; color: #777; font-weight: 500;">
                             (1 account)
                         </span>
-                    </span>
-                    <span class="sheet-header-total" style="font-size: 14px;">
-                        <span>$21,875</span>
+                    </div>
+                    <div class="sheet-header-total" style="display: table-cell; vertical-align: middle; text-align: right; font-size: 14px; white-space: nowrap;">
+                        <div>$21,875</div>
                         
                         
-                        <span style="color: #e53935; font-size: 13px;">
+                        <div style="color: #e53935; font-size: 13px;">
                             ↓ $3,125 (-12.50%)
-                        </span>
+                        </div>
                         
-                    </span>
+                    </div>
                 </div>
 
                 <!-- Sheet content (collapsible in export mode) -->
@@ -475,14 +493,14 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
                         <!-- Single section: skip section header, show accounts directly -->
                         
                             
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                                <div style="flex: 1;">
+                            <div class="account-row" style="display: table; width: 100%; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                                <div class="account-name" style="display: table-cell; vertical-align: middle;">
                                     <div style="font-weight: 500; color: #333;">Crypto Wallet</div>
                                     
                                     <div style="font-size: 12px; color: #999;">Crypto Exchange</div>
                                     
                                 </div>
-                                <div style="text-align: right;">
+                                <div class="account-value" style="display: table-cell; vertical-align: middle; text-align: right; white-space: nowrap;">
                                     <div style="font-weight: 600; color: #333;">$21,875</div>
                                     
                                     
@@ -501,25 +519,27 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
 
         
         <div style="margin-bottom: 30px;">
-            <div class="section-header" style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                <span class="section-header-title">Liabilities</span>
-                <span class="section-header-total" style="font-size: 16px; font-weight: 600;">
-                    <span>Total: $439,920</span>
+            <div class="section-header-row" style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: table; width: 100%;">
+                <div class="section-header-title" style="display: table-cell; vertical-align: middle;">
+                    Liabilities
+                </div>
+                <div class="section-header-total" style="display: table-cell; vertical-align: middle; text-align: right; font-size: 16px; font-weight: 600; white-space: nowrap;">
+                    <div>Total: $439,920</div>
                     
                     
-                    <span style="color: #e53935;">↓ $80 (-0.02%)</span>
+                    <div style="color: #e53935;">↓ $80 (-0.02%)</div>
                     
-                </span>
+                </div>
             </div>
             
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                <div style="flex: 1;">
+            <div class="account-row" style="display: table; width: 100%; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                <div class="account-name" style="display: table-cell; vertical-align: middle;">
                     <div style="font-weight: 500; color: #333;">Mortgage - Primary Residence</div>
                     
                     <div style="font-size: 12px; color: #999;">Mortgage Bank</div>
                     
                 </div>
-                <div style="text-align: right;">
+                <div class="account-value" style="display: table-cell; vertical-align: middle; text-align: right; white-space: nowrap;">
                     <div style="font-weight: 600; color: #333;">$424,950</div>
                     
                     
@@ -528,14 +548,14 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
                 </div>
             </div>
             
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                <div style="flex: 1;">
+            <div class="account-row" style="display: table; width: 100%; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                <div class="account-name" style="display: table-cell; vertical-align: middle;">
                     <div style="font-weight: 500; color: #333;">Auto Loan - Vehicle 1</div>
                     
                     <div style="font-size: 12px; color: #999;">Auto Finance Co</div>
                     
                 </div>
-                <div style="text-align: right;">
+                <div class="account-value" style="display: table-cell; vertical-align: middle; text-align: right; white-space: nowrap;">
                     <div style="font-weight: 600; color: #333;">$14,970</div>
                     
                     
@@ -557,7 +577,7 @@ Action: Review your crypto holdings as part of next portfolio rebalancing - the 
         
 
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #999; font-size: 12px; text-align: center;">
-            Report generated on Oct 27, 2025<br>
+            Report generated on Oct 28, 2025<br>
             <a href="https://github.com/the-mace/kubera-reporting" style="color: #0066cc; text-decoration: none;">kubera-reporting on GitHub</a>
         </div>
     </div>
