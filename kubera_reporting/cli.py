@@ -251,11 +251,22 @@ def report(
         )
 
         # Generate and send each report type
+        reports_sent = 0
         for report_type in report_types:
             console.print(f"\n[bold cyan]--- {report_type.value.upper()} REPORT ---[/bold cyan]")
 
             # Get appropriate comparison snapshot for this report type
             previous_snapshot = storage.get_comparison_snapshot(today, report_type)
+
+            # Skip non-daily reports if there's no comparison data
+            # (Daily reports are sent even without comparison to show current balances)
+            if not previous_snapshot and report_type != ReportType.DAILY:
+                console.print(
+                    f"[yellow]Skipping {report_type.value} report:[/yellow] "
+                    f"No comparison snapshot found. You'll receive this report type "
+                    f"once historical data is available."
+                )
+                continue
 
             if not previous_snapshot:
                 console.print(
@@ -272,6 +283,7 @@ def report(
                 recipient_name,
                 generate_ai=True,
             )
+            reports_sent += 1
 
         # Clean up old snapshots (keep milestones and recent data)
         console.print("\n[bold]Cleaning up old snapshots...[/bold]")
@@ -281,9 +293,7 @@ def report(
         else:
             console.print("[dim]No old snapshots to remove[/dim]")
 
-        console.print(
-            f"\n[bold green]Done![/bold green] Sent {len(report_types)} report(s) to {email}"
-        )
+        console.print(f"\n[bold green]Done![/bold green] Sent {reports_sent} report(s) to {email}")
 
     except KuberaReportingError as e:
         console.print(f"[red]Error:[/red] {e}")
@@ -581,11 +591,22 @@ def send(
         )
 
         # Generate and send each report type
+        reports_sent = 0
         for report_type in report_types:
             console.print(f"\n[bold cyan]--- {report_type.value.upper()} REPORT ---[/bold cyan]")
 
             # Get appropriate comparison snapshot for this report type
             previous_snapshot = storage.get_comparison_snapshot(snapshot_date, report_type)
+
+            # Skip non-daily reports if there's no comparison data
+            # (Daily reports are sent even without comparison to show current balances)
+            if not previous_snapshot and report_type != ReportType.DAILY:
+                console.print(
+                    f"[yellow]Skipping {report_type.value} report:[/yellow] "
+                    f"No comparison snapshot found. You'll receive this report type "
+                    f"once historical data is available."
+                )
+                continue
 
             if not previous_snapshot:
                 console.print(
@@ -605,15 +626,16 @@ def send(
                 dry_run=dry_run,
                 hide_amounts=hide_amounts,
             )
+            reports_sent += 1
 
         if dry_run:
             console.print(
-                f"\n[bold green]Done![/bold green] Generated {len(report_types)} report(s) "
+                f"\n[bold green]Done![/bold green] Generated {reports_sent} report(s) "
                 f"(dry-run, no emails sent)"
             )
         else:
             console.print(
-                f"\n[bold green]Done![/bold green] Sent {len(report_types)} report(s) to {email}"
+                f"\n[bold green]Done![/bold green] Sent {reports_sent} report(s) to {email}"
             )
 
     except KuberaReportingError as e:

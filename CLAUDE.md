@@ -106,11 +106,15 @@ The system supports **daily, weekly, monthly, quarterly, and yearly reports**. W
 - **Quarterly**: 1st of Jan/Apr/Jul/Oct (compares today vs 1st of previous quarter)
 - **Yearly**: Jan 1st (compares today vs Jan 1st of previous year)
 
-**Example**: On Monday, April 1st, you'll receive **4 emails**:
+**Important**: Weekly, monthly, quarterly, and yearly reports are **only sent when comparison data exists**. If there's no previous snapshot for that period (e.g., no snapshot from last Monday for a weekly report), that report is automatically skipped. Daily reports are always sent to show current balances even on the first day.
+
+**Example**: On Monday, April 1st, assuming you have all historical data:
 1. Daily report (vs yesterday, March 31st)
-2. Weekly report (vs last Monday, March 24th)
-3. Monthly report (vs March 1st)
-4. Quarterly report (vs January 1st)
+2. Weekly report (vs last Monday, March 24th) - only if March 24th snapshot exists
+3. Monthly report (vs March 1st) - only if March 1st snapshot exists
+4. Quarterly report (vs January 1st) - only if January 1st snapshot exists
+
+**First-time use**: On your first Monday, you'll only get a daily report. Once you have snapshots from previous Mondays, you'll start receiving weekly reports too.
 
 ### Smart Data Retention
 

@@ -136,3 +136,86 @@ def test_send_command_invalid_date():
 
     assert result.exit_code == 1
     assert "Invalid date format" in result.output
+
+
+def test_send_command_monday_without_previous_monday(temp_data_dir):
+    """Test that weekly report is skipped when there's no previous Monday snapshot."""
+    # Create Monday snapshot (2025-01-20 is a Monday)
+    fixture_dir = Path(__file__).parent / "fixtures"
+    with open(fixture_dir / "snapshot_2025-01-16.json") as f:
+        snapshot = json.load(f)
+
+    # Save as Monday
+    snapshot["timestamp"] = "2025-01-20T12:00:00Z"
+    with open(temp_data_dir / "snapshot_2025-01-20.json", "w") as f:
+        json.dump(snapshot, f)
+
+    # Save yesterday for daily comparison (but no previous Monday)
+    snapshot["timestamp"] = "2025-01-19T12:00:00Z"
+    with open(temp_data_dir / "snapshot_2025-01-19.json", "w") as f:
+        json.dump(snapshot, f)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "send",
+            "--date",
+            "2025-01-20",
+            "--data-dir",
+            str(temp_data_dir),
+            "--no-ai",
+            "--dry-run",
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    assert "Generating 2 report(s): daily, weekly" in result.output
+    assert "DAILY REPORT" in result.output
+    assert "WEEKLY REPORT" in result.output
+    # Verify weekly report was skipped
+    assert "Skipping weekly report" in result.output
+    assert "No comparison snapshot found" in result.output
+    # Should only generate 1 report (daily)
+    assert "Generated 1 report(s) (dry-run, no emails sent)" in result.output
+
+
+def test_send_command_first_of_month_without_previous_month(temp_data_dir):
+    """Test that monthly report is skipped when there's no previous month snapshot."""
+    # Create 1st of month snapshot (2025-02-01)
+    fixture_dir = Path(__file__).parent / "fixtures"
+    with open(fixture_dir / "snapshot_2025-01-16.json") as f:
+        snapshot = json.load(f)
+
+    # Save as 1st of February
+    snapshot["timestamp"] = "2025-02-01T12:00:00Z"
+    with open(temp_data_dir / "snapshot_2025-02-01.json", "w") as f:
+        json.dump(snapshot, f)
+
+    # Save yesterday for daily comparison (but no previous 1st of month)
+    snapshot["timestamp"] = "2025-01-31T12:00:00Z"
+    with open(temp_data_dir / "snapshot_2025-01-31.json", "w") as f:
+        json.dump(snapshot, f)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "send",
+            "--date",
+            "2025-02-01",
+            "--data-dir",
+            str(temp_data_dir),
+            "--no-ai",
+            "--dry-run",
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    # Feb 1 2025 is a Saturday, so should get daily, weekly, and monthly
+    assert "daily" in result.output.lower()
+    assert "DAILY REPORT" in result.output
+    # Should skip weekly and monthly due to no comparison data
+    assert "Skipping" in result.output
