@@ -356,6 +356,9 @@ OPENAI_API_KEY=your_openai_key      # GPT
 
 # Optional: Override default model
 KUBERA_REPORT_LLM_MODEL=xai/grok-4-fast-reasoning
+
+# Optional: Minimum dollar amount for "also notable" AI insights (default: 250)
+KUBERA_AI_NOTABLE_THRESHOLD=250
 ```
 
 ## Dependencies
@@ -387,3 +390,4 @@ GitHub Actions workflow (`.github/workflows/ci.yml`):
 - always check for any real data or PII before committing code
 - when debugging/working on the reports and a fix is ready, generate a real html report and open it in the default browser so the user can see the changes
 - Review all changes to make sure there's no PII (person names, account names, brokerage names, etc) before every commit
+- All imports should be added at the top of the file

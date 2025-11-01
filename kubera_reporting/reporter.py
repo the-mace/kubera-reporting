@@ -2,6 +2,7 @@
 
 import io
 import json
+import os
 from datetime import datetime
 
 import matplotlib
@@ -421,6 +422,9 @@ class PortfolioReporter:
 
             llm = LLMClient()
 
+            # Get configurable threshold for "also notable" changes (default: $250)
+            notable_threshold = float(os.getenv("KUBERA_AI_NOTABLE_THRESHOLD", "250"))
+
             # Format period description based on report type
             period_descriptions = {
                 ReportType.DAILY: "daily",
@@ -534,6 +538,13 @@ class PortfolioReporter:
                 for d in by_dollar[:3]
             ]
 
+            # Filter percent movers by notable threshold (absolute change amount)
+            notable_percent_movers = [
+                d
+                for d in by_percent[:10]  # Check top 10 by percent
+                if abs(float(d["change"])) >= notable_threshold  # type: ignore[arg-type]
+            ]
+
             top_percent_movers = [
                 {
                     "name": d["name"],
@@ -543,7 +554,7 @@ class PortfolioReporter:
                     "percent": round(float(d["percent"]), 2),  # type: ignore[arg-type]
                     "is_holding": d["is_holding"],
                 }
-                for d in by_percent[:3]
+                for d in notable_percent_movers[:3]  # Take top 3 above threshold
             ]
 
             # Note: For now, debt movers use aggregated data (less common to have individual debts)
