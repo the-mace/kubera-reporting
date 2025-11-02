@@ -133,6 +133,35 @@ For daily automated reports, see the [Automation with Cron](#automation-with-cro
 - This protects against rate limits and unnecessary API calls
 - You can safely run the report multiple times per day
 
+## Kubera Configuration Best Practices
+
+### ⚠️ Account and Section Naming
+
+**IMPORTANT**: In Kubera, ensure that your **account names do not exactly match your section names**. The reporting system filters out accounts where the name matches the section name to prevent double-counting parent accounts with their holdings.
+
+**Problem Example:**
+```
+Sheet: Investment Accounts
+├── Section: "Brokerage - Trading"
+│   └── Account: "Brokerage - Trading" ❌ (account skipped - matches section name!)
+│       └── Holdings...
+```
+
+**Correct Example:**
+```
+Sheet: Investment Accounts
+├── Section: "Trading"
+│   └── Account: "Brokerage - Trading" ✓ (account included - different from section)
+│       └── Holdings...
+```
+
+**How to Fix:**
+1. Log into Kubera
+2. Go to your account settings
+3. Rename sections to be distinct from account names (e.g., "Trading" instead of "Brokerage - Trading")
+
+**Why this matters:** If an account name matches its section name exactly, the entire account (including all holdings) will be hidden from reports, potentially excluding significant portions of your portfolio.
+
 ## Multi-Period Reporting
 
 The system automatically generates **multiple report types** based on the current date:
