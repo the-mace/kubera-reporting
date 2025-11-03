@@ -1153,7 +1153,7 @@ margin-bottom: 30px;">
         {% if assets_by_sheet %}
         <div style="margin-bottom: 30px;">
             <div class="section-header-row" style="font-size: 18px; font-weight: 600; color: #333; \
-margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: table; \
+margin-bottom: 8px; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px; display: table; \
 width: 100%;">
                 <div class="section-header-title" \
 style="display: table-cell; vertical-align: middle;">
@@ -1178,8 +1178,8 @@ font-size: 16px; font-weight: 600; white-space: nowrap;">
                 <!-- Sheet-level header -->
                 <div {% if is_export %}class="collapsible-header collapsed sheet-header-row" \
 onclick="toggleSheet({{ sheet_id }})"{% else %}class="sheet-header-row"{% endif %} \
-style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; \
-padding-bottom: 8px; border-bottom: 1px solid #e0e0e0; display: table; width: 100%;">
+style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 5px; \
+padding-bottom: 4px; border-bottom: 1px solid #e0e0e0; display: table; width: 100%;">
                     <div class="sheet-header-title" \
 style="display: table-cell; vertical-align: middle;">
                         {% if is_export %}<span class="toggle-indicator">▼</span>{% endif %}
@@ -1217,8 +1217,8 @@ font-size: 14px; white-space: nowrap;">
                             <div {% if is_export %}\
 class="collapsible-header collapsed subsection-header-row" \
 onclick="toggleSection('{{ section_id }}')"{% else %}class="subsection-header-row"{% endif %} \
-style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 8px; \
-padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; display: table; width: 100%;">
+style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 4px; \
+padding-bottom: 3px; border-bottom: 1px solid #f0f0f0; display: table; width: 100%;">
                                 <div class="subsection-header-title" style="display: table-cell; \
 vertical-align: middle;">
                                     {% if is_export %}<span class="toggle-indicator">▼</span>\
@@ -1317,7 +1317,7 @@ color: {{ change_color }};">{{ change_text }}</div>
         {% if debt_movers %}
         <div style="margin-bottom: 30px;">
             <div class="section-header-row" style="font-size: 18px; font-weight: 600; color: #333; \
-margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; display: table; \
+margin-bottom: 8px; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px; display: table; \
 width: 100%;">
                 <div class="section-header-title" \
 style="display: table-cell; vertical-align: middle;">
@@ -1362,8 +1362,8 @@ text-align: right; white-space: nowrap;">
 
         {% if allocation %}
         <div style="margin-bottom: 30px;">
-            <div style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; \
-border-bottom: 2px solid #e0e0e0; padding-bottom: 10px;">Asset Allocation</div>
+            <div style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 8px; \
+border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Asset Allocation</div>
             <div style="text-align: center;">
                 <img src="{{ chart_src }}" alt="Asset Allocation Chart" \
 style="max-width: 100%; height: auto;" />
@@ -1371,7 +1371,7 @@ style="max-width: 100%; height: auto;" />
         </div>
         {% endif %}
 
-        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; \
+        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e0e0e0; \
 color: #999; font-size: 12px; text-align: center;">
             Report generated on {{ report_date }}<br>
             <a href="https://github.com/the-mace/kubera-reporting" \
