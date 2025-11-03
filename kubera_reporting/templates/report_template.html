@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Mobile-responsive styles - uses !important to override inline styles */
+        /* Note: Not all email clients support media queries (e.g., Outlook) */
+        /* Inline styles below are mobile-first for graceful degradation */
+        @media only screen and (max-width: 640px) {
+            body {
+                padding: 10px !important;
+            }
+            .email-container {
+                padding: 20px !important;
+            }
+            .section-header-row {
+                display: block !important;
+            }
+            .section-header-title {
+                display: block !important;
+                margin-bottom: 8px;
+            }
+            .section-header-total {
+                display: block !important;
+                text-align: left !important;
+                font-size: 14px !important;
+            }
+            .section-header-total > div {
+                display: block;
+                margin-bottom: 4px;
+            }
+            .sheet-header-row {
+                display: block !important;
+            }
+            .sheet-header-title {
+                display: block !important;
+                margin-bottom: 6px;
+            }
+            .sheet-header-total {
+                display: block !important;
+                text-align: left !important;
+                padding-left: 20px;
+                font-size: 13px !important;
+            }
+            .sheet-header-total > div {
+                display: block;
+                margin-bottom: 3px;
+            }
+            .subsection-header-row {
+                display: block !important;
+            }
+            .subsection-header-title {
+                display: block !important;
+                margin-bottom: 5px;
+            }
+            .subsection-header-total {
+                display: block !important;
+                text-align: left !important;
+                padding-left: 20px;
+                font-size: 12px !important;
+            }
+            .subsection-header-total > div {
+                display: block;
+                margin-bottom: 2px;
+            }
+            .account-row {
+                display: block !important;
+            }
+            .account-name {
+                display: block !important;
+                margin-bottom: 6px;
+            }
+            .account-value {
+                display: block !important;
+                text-align: left !important;
+            }
+        }
+        {% if is_export %}
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+        }
+        .collapsible-header:hover {
+            background-color: #f5f5f5;
+        }
+        .toggle-indicator {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-right: 4px;
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+        .collapsed .toggle-indicator {
+            transform: rotate(-90deg);
+        }
+        .collapsible-content {
+            display: none;
+        }
+        .collapsible-content.expanded {
+            display: block;
+        }
+        {% endif %}
+    </style>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5;">
+    <div class="email-container" style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; padding: 30px;">
+        <div style="color: #666; font-size: 18px; margin-bottom: 30px; line-height: 1.6; font-weight: normal;">{{ greeting }}</div>
+
+        {% if ai_summary %}
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #00b383;">
+            <div style="color: #666; font-size: 12px; font-weight: 600; margin-bottom: 8px;">AI INSIGHTS</div>
+            <div style="color: #333; font-size: 14px; line-height: 1.6;">{{ ai_summary|safe }}</div>
+        </div>
+        {% endif %}
+
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+            <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Net worth</div>
+            <div style="font-size: 32px; font-weight: bold; color: #333;">{{ format_net_worth(current.net_worth) }}</div>
+            {% if net_worth_change %}
+            {% set change_text, change_color = format_change(net_worth_change, net_worth_change_percent) %}
+            <div style="font-size: 18px; font-weight: 600; margin-top: 5px; color: {{ change_color }};">{{ change_text }}</div>
+            {% endif %}
+        </div>
+
+        {% if assets_by_sheet %}
+        <div style="margin-bottom: 30px;">
+            <div class="section-header-row" style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 8px; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px; display: table; width: 100%;">
+                <div class="section-header-title" style="display: table-cell; vertical-align: middle;">
+                    Assets
+                </div>
+                <div class="section-header-total" style="display: table-cell; vertical-align: middle; text-align: right; font-size: 16px; font-weight: 600; white-space: nowrap;">
+                    <div>Total: {{ format_money(current.total_assets) }}</div>
+                    {% if previous and total_asset_change %}
+                    {% set change_text, change_color = format_change({'amount': total_asset_change, 'currency': current.currency}, total_asset_change_percent) %}
+                    <div style="color: {{ change_color }};">{{ change_text }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% for sheet_name, sheet_sections in assets_by_sheet.items() %}
+            {% set sheet_id = loop.index %}
+            <div style="margin-top: 20px;" class="sheet-container">
+                <!-- Sheet-level header -->
+                <div {% if is_export %}class="collapsible-header collapsed sheet-header-row" onclick="toggleSheet({{ sheet_id }})"{% else %}class="sheet-header-row"{% endif %} style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 5px; padding-bottom: 4px; border-bottom: 1px solid #e0e0e0; display: table; width: 100%;">
+                    <div class="sheet-header-title" style="display: table-cell; vertical-align: middle;">
+                        {% if is_export %}<span class="toggle-indicator">▼</span>{% endif %}
+                        {{ sheet_name }}
+                        <span style="font-size: 14px; color: #777; font-weight: 500;">
+                            ({{ sheet_totals[sheet_name].count }} account{{ 's' if sheet_totals[sheet_name].count != 1 else '' }})
+                        </span>
+                    </div>
+                    <div class="sheet-header-total" style="display: table-cell; vertical-align: middle; text-align: right; font-size: 14px; white-space: nowrap;">
+                        <div>{{ format_money({'amount': sheet_totals[sheet_name].total_value, 'currency': current.currency}) }}</div>
+                        {% if previous and sheet_totals[sheet_name].total_change %}
+                        {% set sheet_change_text, sheet_change_color = format_change({'amount': sheet_totals[sheet_name].total_change, 'currency': current.currency}, sheet_totals[sheet_name].change_percent) %}
+                        <div style="color: {{ sheet_change_color }}; font-size: 13px;">
+                            {{ sheet_change_text }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Sheet content (collapsible in export mode) -->
+                <div id="sheet-{{ sheet_id }}" class="collapsible-content">
+                    <!-- Section-level grouping within sheet (only if multiple sections) -->
+                    {% if sheet_sections|length > 1 %}
+                        {% for section_name, accounts in sheet_sections.items() %}
+                        {% set section_id = sheet_id ~ '_' ~ loop.index %}
+                        {% set section = section_totals[sheet_name][section_name] %}
+                        <div style="margin-left: 15px; margin-top: 15px;">
+                            <div {% if is_export %}class="collapsible-header collapsed subsection-header-row" onclick="toggleSection('{{ section_id }}')"{% else %}class="subsection-header-row"{% endif %} style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1px solid #f0f0f0; display: table; width: 100%;">
+                                <div class="subsection-header-title" style="display: table-cell; vertical-align: middle;">
+                                    {% if is_export %}<span class="toggle-indicator">▼</span>{% endif %}
+                                    {{ section_name }}
+                                    <span style="font-size: 13px; color: #888; font-weight: 500;">
+                                        ({{ section.count }} account{{ 's' if section.count != 1 else '' }})
+                                    </span>
+                                </div>
+                                <div class="subsection-header-total" style="display: table-cell; vertical-align: middle; text-align: right; font-size: 13px; white-space: nowrap;">
+                                    <div>{{ format_money({'amount': section.total_value, 'currency': current.currency}) }}</div>
+                                    {% if previous and section.total_change %}
+                                    {% set section_change_text, section_change_color = format_change({'amount': section.total_change, 'currency': current.currency}, section.change_percent) %}
+                                    <div style="color: {{ section_change_color }}; font-size: 12px;">
+                                        {{ section_change_text }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Section content (collapsible in export mode) -->
+                            <div id="section-{{ section_id }}" class="collapsible-content">
+                                <!-- Individual accounts within section -->
+                                {% for account in accounts %}
+                                <div class="account-row" style="display: table; width: 100%; padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
+                                    <div class="account-name" style="display: table-cell; vertical-align: middle;">
+                                        <div style="font-weight: 500; color: #333; font-size: 13px;">{{ account.name }}</div>
+                                        {% if account.institution %}
+                                        <div style="font-size: 11px; color: #999;">{{ account.institution }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="account-value" style="display: table-cell; vertical-align: middle; text-align: right; white-space: nowrap;">
+                                        <div style="font-weight: 600; color: #333; font-size: 13px;">{{ format_money(account.current_value) }}</div>
+                                        {% if previous %}
+                                        {% set change_text, change_color = format_change(account.change, account.change_percent) %}
+                                        <div style="font-size: 12px; font-weight: 600; color: {{ change_color }};">{{ change_text }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Single section: skip section header, show accounts directly -->
+                        {% for section_name, accounts in sheet_sections.items() %}
+                            {% for account in accounts %}
+                            <div class="account-row" style="display: table; width: 100%; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                                <div class="account-name" style="display: table-cell; vertical-align: middle;">
+                                    <div style="font-weight: 500; color: #333;">{{ account.name }}</div>
+                                    {% if account.institution %}
+                                    <div style="font-size: 12px; color: #999;">{{ account.institution }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="account-value" style="display: table-cell; vertical-align: middle; text-align: right; white-space: nowrap;">
+                                    <div style="font-weight: 600; color: #333;">{{ format_money(account.current_value) }}</div>
+                                    {% if previous %}
+                                    {% set change_text, change_color = format_change(account.change, account.change_percent) %}
+                                    <div style="font-size: 14px; font-weight: 600; color: {{ change_color }};">{{ change_text }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if debt_movers %}
+        <div style="margin-bottom: 30px;">
+            <div class="section-header-row" style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 8px; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px; display: table; width: 100%;">
+                <div class="section-header-title" style="display: table-cell; vertical-align: middle;">
+                    Liabilities
+                </div>
+                <div class="section-header-total" style="display: table-cell; vertical-align: middle; text-align: right; font-size: 16px; font-weight: 600; white-space: nowrap;">
+                    <div>Total: {{ format_money(current.total_debts) }}</div>
+                    {% if previous and total_debt_change %}
+                    {% set change_text, change_color = format_change({'amount': total_debt_change, 'currency': current.currency}, total_debt_change_percent) %}
+                    <div style="color: {{ change_color }};">{{ change_text }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% for account in debt_movers %}
+            <div class="account-row" style="display: table; width: 100%; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                <div class="account-name" style="display: table-cell; vertical-align: middle;">
+                    <div style="font-weight: 500; color: #333;">{{ account.name }}</div>
+                    {% if account.institution %}
+                    <div style="font-size: 12px; color: #999;">{{ account.institution }}</div>
+                    {% endif %}
+                </div>
+                <div class="account-value" style="display: table-cell; vertical-align: middle; text-align: right; white-space: nowrap;">
+                    <div style="font-weight: 600; color: #333;">{{ format_money(account.current_value) }}</div>
+                    {% if previous %}
+                    {% set change_text, change_color = format_change(account.change, account.change_percent) %}
+                    <div style="font-size: 14px; font-weight: 600; color: {{ change_color }};">{{ change_text }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if allocation %}
+        <div style="margin-bottom: 30px;">
+            <div style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 8px; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Asset Allocation</div>
+            <div style="text-align: center;">
+                <img src="{{ chart_src }}" alt="Asset Allocation Chart" style="max-width: 100%; height: auto;" />
+            </div>
+        </div>
+        {% endif %}
+
+        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e0e0e0; color: #999; font-size: 12px; text-align: center;">
+            Report generated on {{ report_date }}<br>
+            <a href="https://github.com/the-mace/kubera-reporting" style="color: #0066cc; text-decoration: none;">kubera-reporting on GitHub</a>
+        </div>
+    </div>
+
+    {% if is_export %}
+    <script>
+        function toggleSheet(sheetId) {
+            const header = event.currentTarget;
+            const content = document.getElementById('sheet-' + sheetId);
+
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                header.classList.add('collapsed');
+            } else {
+                content.classList.add('expanded');
+                header.classList.remove('collapsed');
+            }
+        }
+
+        function toggleSection(sectionId) {
+            const header = event.currentTarget;
+            const content = document.getElementById('section-' + sectionId);
+
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                header.classList.add('collapsed');
+            } else {
+                content.classList.add('expanded');
+                header.classList.remove('collapsed');
+            }
+        }
+    </script>
+    {% endif %}
+</body>
+</html>

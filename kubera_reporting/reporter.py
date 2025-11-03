@@ -1,16 +1,19 @@
 """Generate portfolio reports."""
 
-import io
+import base64
 import json
 import os
+from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 
-import matplotlib
-import matplotlib.pyplot as plt
-from jinja2 import Template
+from jinja2 import Environment, FileSystemLoader
 
-from kubera_reporting import currency_format
+from kubera_reporting import currency_format, html_formatter
+from kubera_reporting.allocation import calculate_asset_allocation
+from kubera_reporting.chart_generator import generate_allocation_chart
 from kubera_reporting.exceptions import ReportGenerationError
+from kubera_reporting.prompts import AI_SUMMARY_PROMPT_NO_AMOUNTS, AI_SUMMARY_PROMPT_WITH_AMOUNTS
 from kubera_reporting.types import (
     AccountDelta,
     MoneyValue,
@@ -19,12 +22,15 @@ from kubera_reporting.types import (
     ReportType,
 )
 
-# Use non-interactive backend for matplotlib
-matplotlib.use("Agg")
-
 
 class PortfolioReporter:
     """Generates portfolio reports."""
+
+    def __init__(self) -> None:
+        """Initialize the reporter with Jinja2 environment."""
+        # Get the templates directory relative to this file
+        templates_dir = Path(__file__).parent / "templates"
+        self.jinja_env = Environment(loader=FileSystemLoader(str(templates_dir)))
 
     def _aggregate_holdings_to_accounts(self, snapshot: PortfolioSnapshot) -> PortfolioSnapshot:
         """Filter out individual holdings and zero-value accounts, keeping only parent accounts.
@@ -170,232 +176,6 @@ class PortfolioReporter:
             "asset_changes": asset_changes,
             "debt_changes": debt_changes,
         }
-
-    def generate_allocation_chart(self, allocation: dict[str, float]) -> bytes:
-        """Generate pie chart image for asset allocation.
-
-        Args:
-            allocation: Dictionary with allocation percentages
-
-        Returns:
-            PNG image as bytes
-        """
-        # Define colors for each category
-        colors = {
-            "Stocks": "#4CAF50",  # Green
-            "Bonds": "#2196F3",  # Blue
-            "Crypto": "#FF9800",  # Orange
-            "Real Estate": "#9C27B0",  # Purple
-            "Cash": "#00BCD4",  # Cyan
-            "Other": "#795548",  # Brown
-        }
-
-        labels = list(allocation.keys())
-        values = list(allocation.values())
-        chart_colors = [colors.get(label, "#999999") for label in labels]
-
-        # Create figure with better layout
-        fig, ax = plt.subplots(figsize=(10, 7))
-
-        # Function to only show percentages for slices >= 5%
-        def autopct_format(pct: float) -> str:
-            return f"{pct:.1f}%" if pct >= 5 else ""
-
-        # Create pie chart with conditional percentages
-        pie_result = ax.pie(
-            values,
-            labels=None,  # No labels on pie - use legend instead
-            colors=chart_colors,
-            autopct=autopct_format,
-            startangle=90,
-            textprops={"fontsize": 14, "weight": "bold"},
-            pctdistance=0.75,  # Move percentages closer to center
-        )
-        wedges, texts, autotexts = pie_result  # type: ignore[misc]
-
-        # Make percentage text white for better visibility
-        for autotext in autotexts:
-            autotext.set_color("white")
-
-        # Add legend below the chart with percentages
-        legend_labels = [f"{label} ({value:.1f}%)" for label, value in zip(labels, values)]
-        ax.legend(
-            wedges,
-            legend_labels,
-            loc="center",
-            bbox_to_anchor=(0.5, -0.1),
-            ncol=3,
-            fontsize=12,
-            frameon=False,
-        )
-
-        ax.axis("equal")
-
-        # Save to bytes buffer with extra padding for legend
-        buf = io.BytesIO()
-        plt.savefig(
-            buf, format="png", dpi=150, bbox_inches="tight", facecolor="white", pad_inches=0.3
-        )
-        plt.close(fig)
-        buf.seek(0)
-
-        return buf.read()
-
-    def calculate_asset_allocation(self, snapshot: PortfolioSnapshot) -> dict[str, float]:
-        """Calculate asset allocation by category using subType metadata from Kubera API.
-
-        Uses structured metadata (subType, assetClass) instead of parsing account names.
-        Only counts leaf nodes (individual holdings) to avoid double-counting parent accounts.
-
-        Args:
-            snapshot: Portfolio snapshot
-
-        Returns:
-            Dictionary with allocation percentages
-        """
-        categories = {
-            "Stocks": 0.0,
-            "Bonds": 0.0,
-            "Crypto": 0.0,
-            "Real Estate": 0.0,
-            "Cash": 0.0,
-            "Other": 0.0,
-        }
-
-        # Map Kubera subTypes to our categories
-        subtype_to_category = {
-            "stock": "Stocks",
-            "etf": "Stocks",
-            "bond": "Bonds",
-            "cash": "Cash",
-            "crypto": "Crypto",
-            "cryptocurrency": "Crypto",
-            "real estate": "Real Estate",
-            "property": "Real Estate",
-            "primary residence": "Real Estate",
-            "investment property": "Real Estate",
-        }
-
-        for account in snapshot["accounts"]:
-            if account["category"] != "asset":
-                continue
-
-            # Skip parent accounts with children - only count leaf holdings
-            # Parent accounts have aggregate values; their children have the actual holdings
-            # Both parent and children are in the accounts list (from API), so we filter parents
-            account_id = account["id"]
-            if "_" not in account_id:
-                # This is a parent account (pure UUID, no underscore)
-                # Check if there are any child holdings
-                has_children = any(
-                    a["id"].startswith(f"{account_id}_")
-                    for a in snapshot["accounts"]
-                    if a["category"] == "asset"
-                )
-                # Skip parent accounts that have children (to avoid double-counting)
-                # Keep standalone accounts (no children)
-                if has_children:
-                    continue
-
-            amount = account["value"]["amount"]
-
-            # Skip zero-value accounts
-            if amount == 0:
-                continue
-
-            # Get metadata fields (may not exist in old snapshots)
-            sub_type_raw = account.get("sub_type")
-            sub_type = sub_type_raw.lower() if sub_type_raw else ""
-            asset_class_raw = account.get("asset_class")
-            asset_class = asset_class_raw.lower() if asset_class_raw else ""
-            account_type_raw = account.get("account_type")
-            account_type = account_type_raw.lower() if account_type_raw else ""
-            sheet = account["sheet_name"].lower()
-            name = account["name"].lower()
-
-            category = None
-
-            # Try subType first (most reliable)
-            if sub_type in subtype_to_category:
-                category = subtype_to_category[sub_type]
-
-            # Special handling for mutual funds - check name to distinguish bond vs stock funds
-            if sub_type == "mutual fund" or asset_class == "fund":
-                bond_keywords = [
-                    "bond",
-                    "fixed income",
-                    "yield",
-                    "yld",  # Abbreviated yield
-                    "floating rate",
-                    "floating-rate",
-                    "high income",
-                    "high-income",
-                    "high-inc",
-                    "income fund",
-                    "income builder",
-                    "mortgage",
-                    "treasury",
-                    "municipal",
-                    "corporate debt",
-                    "balanced income",  # Balanced funds with "income" are typically bond-heavy
-                ]
-                if any(kw in name for kw in bond_keywords):
-                    category = "Bonds"
-                else:
-                    category = "Stocks"  # Default funds to stocks
-
-            # Check assetClass for direct mappings (if not already categorized)
-            if category is None and asset_class in subtype_to_category:
-                category = subtype_to_category[asset_class]
-
-            # Check assetClass for stock/crypto (when subType is generic)
-            if category is None:
-                if asset_class == "stock":
-                    category = "Stocks"
-                elif asset_class == "crypto":
-                    category = "Crypto"
-
-            # Fallback: check sheet name for crypto or real estate (for manually entered assets)
-            if category is None:
-                if "crypto" in sheet:
-                    category = "Crypto"
-                elif "real estate" in sheet or account_type == "property":
-                    category = "Real Estate"
-
-            # Last resort: parse names (backward compatibility for old snapshots without subType)
-            if category is None:
-                if "crypto" in name:
-                    category = "Crypto"
-                elif "bond" in name:
-                    category = "Bonds"
-                elif "real estate" in sheet or "property" in sheet:
-                    category = "Real Estate"
-                elif "bank" in sheet or "cash" in name or "checking" in name or "savings" in name:
-                    category = "Cash"
-                else:
-                    # Check for investment keywords
-                    investment_keywords = [
-                        "investment",
-                        "brokerage",
-                        "ira",
-                        "401k",
-                        "stock",
-                        "equity",
-                    ]
-                    if any(kw in sheet or kw in name for kw in investment_keywords):
-                        category = "Stocks"
-
-            # Default to Other if still not categorized
-            if category is None:
-                category = "Other"
-
-            categories[category] += amount
-
-        # Convert to percentages
-        total = sum(categories.values())
-        if total > 0:
-            return {k: (v / total * 100) for k, v in categories.items() if v > 0}
-        return {}
 
     def generate_ai_summary(
         self,
@@ -575,7 +355,7 @@ class PortfolioReporter:
             snapshot_for_allocation = report_data.get(
                 "current_unaggregated", report_data["current"]
             )
-            allocation = self.calculate_asset_allocation(snapshot_for_allocation)
+            allocation = calculate_asset_allocation(snapshot_for_allocation)
 
             # Build comprehensive portfolio data for prompt
             # Round allocation percentages to 2 decimal places
@@ -629,29 +409,11 @@ class PortfolioReporter:
                     ],
                 }
 
-                prompt = f"""Analyze this {period} portfolio report (currency: {currency}).
-
-Format your response as:
-1. First sentence: Overall net worth change summary (percentage only)
-2. Blank line
-3. "Key drivers:" followed by bullet points for top_dollar_movers (biggest impact on net worth)
-4. If any top_percent_movers are NOT in top_dollar_movers AND have notable % changes (>5%):
-   - Blank line
-   - "Also notable:" followed by bullet points for those percentage movers
-
-Note: "is_holding": true means individual stock/crypto/asset within a larger account.
-
-CRITICAL RULES:
-- Do NOT mention specific amounts - use only percentages
-- Format bullets with "• " character
-- Do NOT suggest actions or what to watch
-- Do NOT mention asset allocation (shown in pie chart)
-- ONLY use data provided - do not infer
-- Keep factual and concise
-- Only include "Also notable:" section if there are items to show
-
-Portfolio Data:
-{json.dumps(portfolio_data, indent=2)}"""
+                prompt = AI_SUMMARY_PROMPT_NO_AMOUNTS.format(
+                    period=period,
+                    currency=currency,
+                    portfolio_data=json.dumps(portfolio_data, indent=2),
+                )
             else:
                 # Include full amounts with currency
                 portfolio_data = {
@@ -672,32 +434,12 @@ Portfolio Data:
                     "top_debt_movers": top_debt_movers,
                 }
 
-                prompt = f"""Analyze this {period} portfolio report (currency: {currency}).
-
-Format your response as:
-1. First sentence: Overall net worth change summary
-2. Blank line
-3. "Key drivers:" followed by bullet points for top_dollar_movers (biggest impact on net worth)
-4. If any top_percent_movers are NOT in top_dollar_movers AND have notable % changes (>5%):
-   - Blank line
-   - "Also notable:" followed by bullet points for those percentage movers
-
-Note: "is_holding": true means individual stock/crypto/asset within a larger account.
-
-CRITICAL RULES:
-- Use exact names from the data
-- Use {currency_symbol} symbol for amounts (this portfolio uses {currency})
-- Format amounts WITHOUT decimals (e.g., {currency_symbol}1,234 not {currency_symbol}1,234.56)
-- Format percentages with 2 decimal places (e.g., 5.13%)
-- Format bullets with "• " character
-- Do NOT suggest actions or what to watch
-- Do NOT mention asset allocation (shown in pie chart)
-- ONLY use data provided - do not infer
-- Keep factual and concise
-- Only include "Also notable:" section if there are items to show
-
-Portfolio Data:
-{json.dumps(portfolio_data, indent=2)}"""
+                prompt = AI_SUMMARY_PROMPT_WITH_AMOUNTS.format(
+                    period=period,
+                    currency=currency,
+                    currency_symbol=currency_symbol,
+                    portfolio_data=json.dumps(portfolio_data, indent=2),
+                )
 
             # Generate summary
             from litellm import completion
@@ -744,8 +486,6 @@ Portfolio Data:
         """
         try:
             # Group assets by sheet > section (two-level hierarchy)
-            from collections import defaultdict
-
             # First level: sheet_name
             assets_by_sheet: dict[str, dict[str, list[AccountDelta]]] = defaultdict(
                 lambda: defaultdict(list)
@@ -851,14 +591,12 @@ Portfolio Data:
             snapshot_for_allocation = report_data.get(
                 "current_unaggregated", report_data["current"]
             )
-            allocation = self.calculate_asset_allocation(snapshot_for_allocation)
+            allocation = calculate_asset_allocation(snapshot_for_allocation)
 
             # Always embed chart as base64 data URL for better forwarding compatibility
             chart_src = ""
             if allocation:
-                import base64
-
-                chart_bytes = self.generate_allocation_chart(allocation)
+                chart_bytes = generate_allocation_chart(allocation)
                 chart_b64 = base64.b64encode(chart_bytes).decode("utf-8")
                 chart_src = f"data:image/png;base64,{chart_b64}"
 
@@ -901,21 +639,23 @@ Portfolio Data:
 
             # Create wrapper functions that respect hide_amounts flag
             def format_money_wrapper(value: MoneyValue) -> str:
-                return self._format_money(value, hide_amounts=hide_amounts)
+                return html_formatter.format_money(value, hide_amounts=hide_amounts)
 
             def format_net_worth_wrapper(value: MoneyValue) -> str:
-                return self._format_net_worth(value, hide_amounts=hide_amounts)
+                return html_formatter.format_net_worth(value, hide_amounts=hide_amounts)
 
             def format_change_wrapper(
                 change: MoneyValue, change_percent: float | None = None
             ) -> tuple[str, str]:
-                return self._format_change(change, change_percent, hide_amounts=hide_amounts)
+                return html_formatter.format_change(
+                    change, change_percent, hide_amounts=hide_amounts
+                )
 
             # Convert AI summary newlines to HTML <br> tags for email compatibility
             # Email clients don't reliably support white-space: pre-line
             ai_summary_html = ai_summary.replace("\n", "<br>") if ai_summary else None
 
-            template = Template(self._get_html_template())
+            template = self.jinja_env.get_template("report_template.html")
             return template.render(
                 current=report_data["current"],
                 previous=report_data["previous"],
@@ -943,470 +683,3 @@ Portfolio Data:
             )
         except Exception as e:
             raise ReportGenerationError(f"Failed to generate HTML report: {e}") from e
-
-    def _format_money(self, value: MoneyValue, hide_amounts: bool = False) -> str:
-        """Format money value with currency-aware symbols.
-
-        Args:
-            value: Money value to format
-            hide_amounts: If True, return "$XX" or "€XX" instead of actual amount
-
-        Returns:
-            Formatted money string like "$1,234" or "€1,234"
-        """
-        return currency_format.format_money(
-            value["amount"], value["currency"], hide_amounts=hide_amounts
-        )
-
-    def _get_fire_category(self, amount: float) -> str | None:
-        """Get FIRE category based on net worth amount.
-
-        Args:
-            amount: Net worth amount
-
-        Returns:
-            FIRE category string or None if under $800k
-        """
-        if amount < 800_000:
-            return None
-        elif amount < 1_500_000:
-            return "Lean FIRE"
-        elif amount < 2_000_000:
-            return "Coast FIRE"
-        elif amount < 2_500_000:
-            return "FIRE"
-        else:
-            return "Fat FIRE"
-
-    def _format_net_worth(self, value: MoneyValue, hide_amounts: bool = False) -> str:
-        """Format net worth value with FIRE category indicator.
-
-        Args:
-            value: Net worth value
-            hide_amounts: If True, mask the dollar amount but keep FIRE category
-
-        Returns:
-            Formatted string like "$1,234,567 (Fat FIRE)" or "$750,000" or "$XX (Fat FIRE)"
-        """
-        formatted_money = self._format_money(value, hide_amounts=hide_amounts)
-        category = self._get_fire_category(value["amount"])
-
-        if category:
-            return f"{formatted_money} ({category})"
-        return formatted_money
-
-    def _format_change(
-        self, change: MoneyValue, change_percent: float | None = None, hide_amounts: bool = False
-    ) -> tuple[str, str]:
-        """Format change value with color and optional percentage.
-
-        Args:
-            change: Money change amount
-            change_percent: Optional percentage change
-            hide_amounts: If True, mask amounts but show percentage
-
-        Returns:
-            Tuple of (formatted_string, color) like ("↑ $1,234 (+5.2%)", "#00b383")
-        """
-        return currency_format.format_change(
-            change["amount"], change["currency"], change_percent, hide_amounts=hide_amounts
-        )
-
-    def _get_html_template(self) -> str:
-        """Get HTML email template with inline styles for better email client compatibility."""
-        return """<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        /* Mobile-responsive styles - uses !important to override inline styles */
-        /* Note: Not all email clients support media queries (e.g., Outlook) */
-        /* Inline styles below are mobile-first for graceful degradation */
-        @media only screen and (max-width: 640px) {
-            body {
-                padding: 10px !important;
-            }
-            .email-container {
-                padding: 20px !important;
-            }
-            .section-header-row {
-                display: block !important;
-            }
-            .section-header-title {
-                display: block !important;
-                margin-bottom: 8px;
-            }
-            .section-header-total {
-                display: block !important;
-                text-align: left !important;
-                font-size: 14px !important;
-            }
-            .section-header-total > div {
-                display: block;
-                margin-bottom: 4px;
-            }
-            .sheet-header-row {
-                display: block !important;
-            }
-            .sheet-header-title {
-                display: block !important;
-                margin-bottom: 6px;
-            }
-            .sheet-header-total {
-                display: block !important;
-                text-align: left !important;
-                padding-left: 20px;
-                font-size: 13px !important;
-            }
-            .sheet-header-total > div {
-                display: block;
-                margin-bottom: 3px;
-            }
-            .subsection-header-row {
-                display: block !important;
-            }
-            .subsection-header-title {
-                display: block !important;
-                margin-bottom: 5px;
-            }
-            .subsection-header-total {
-                display: block !important;
-                text-align: left !important;
-                padding-left: 20px;
-                font-size: 12px !important;
-            }
-            .subsection-header-total > div {
-                display: block;
-                margin-bottom: 2px;
-            }
-            .account-row {
-                display: block !important;
-            }
-            .account-name {
-                display: block !important;
-                margin-bottom: 6px;
-            }
-            .account-value {
-                display: block !important;
-                text-align: left !important;
-            }
-        }
-        {% if is_export %}
-        .collapsible-header {
-            cursor: pointer;
-            user-select: none;
-        }
-        .collapsible-header:hover {
-            background-color: #f5f5f5;
-        }
-        .toggle-indicator {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            margin-right: 4px;
-            font-size: 12px;
-            transition: transform 0.2s;
-        }
-        .collapsed .toggle-indicator {
-            transform: rotate(-90deg);
-        }
-        .collapsible-content {
-            display: none;
-        }
-        .collapsible-content.expanded {
-            display: block;
-        }
-        {% endif %}
-    </style>
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; \
-margin: 0; padding: 20px; background-color: #f5f5f5;">
-    <div class="email-container" style="max-width: 600px; margin: 0 auto; background-color: white; \
-border-radius: 8px; padding: 30px;">
-        <div style="color: #666; font-size: 18px; margin-bottom: 30px; line-height: 1.6; \
-font-weight: normal;">{{ greeting }}</div>
-
-        {% if ai_summary %}
-        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; \
-margin-bottom: 20px; border-left: 4px solid #00b383;">
-            <div style="color: #666; font-size: 12px; font-weight: 600; \
-margin-bottom: 8px;">AI INSIGHTS</div>
-            <div style="color: #333; font-size: 14px; line-height: 1.6;">\
-{{ ai_summary|safe }}</div>
-        </div>
-        {% endif %}
-
-        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; \
-margin-bottom: 30px;">
-            <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Net worth</div>
-            <div style="font-size: 32px; font-weight: bold; color: #333;">\
-{{ format_net_worth(current.net_worth) }}</div>
-            {% if net_worth_change %}
-            {% set change_text, change_color = format_change(
-                net_worth_change, net_worth_change_percent) %}
-            <div style="font-size: 18px; font-weight: 600; margin-top: 5px; color: \
-{{ change_color }};">{{ change_text }}</div>
-            {% endif %}
-        </div>
-
-        {% if assets_by_sheet %}
-        <div style="margin-bottom: 30px;">
-            <div class="section-header-row" style="font-size: 18px; font-weight: 600; color: #333; \
-margin-bottom: 8px; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px; display: table; \
-width: 100%;">
-                <div class="section-header-title" \
-style="display: table-cell; vertical-align: middle;">
-                    Assets
-                </div>
-                <div class="section-header-total" \
-style="display: table-cell; vertical-align: middle; text-align: right; \
-font-size: 16px; font-weight: 600; white-space: nowrap;">
-                    <div>Total: {{ format_money(current.total_assets) }}</div>
-                    {% if previous and total_asset_change %}
-                    {% set change_text, change_color = format_change(
-                        {'amount': total_asset_change, 'currency': current.currency},
-                        total_asset_change_percent) %}
-                    <div style="color: {{ change_color }};">{{ change_text }}</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            {% for sheet_name, sheet_sections in assets_by_sheet.items() %}
-            {% set sheet_id = loop.index %}
-            <div style="margin-top: 20px;" class="sheet-container">
-                <!-- Sheet-level header -->
-                <div {% if is_export %}class="collapsible-header collapsed sheet-header-row" \
-onclick="toggleSheet({{ sheet_id }})"{% else %}class="sheet-header-row"{% endif %} \
-style="font-size: 16px; font-weight: 600; color: #555; margin-bottom: 5px; \
-padding-bottom: 4px; border-bottom: 1px solid #e0e0e0; display: table; width: 100%;">
-                    <div class="sheet-header-title" \
-style="display: table-cell; vertical-align: middle;">
-                        {% if is_export %}<span class="toggle-indicator">▼</span>{% endif %}
-                        {{ sheet_name }}
-                        <span style="font-size: 14px; color: #777; font-weight: 500;">
-                            ({{ sheet_totals[sheet_name].count }} account\
-{{ 's' if sheet_totals[sheet_name].count != 1 else '' }})
-                        </span>
-                    </div>
-                    <div class="sheet-header-total" \
-style="display: table-cell; vertical-align: middle; text-align: right; \
-font-size: 14px; white-space: nowrap;">
-                        <div>{{ format_money({'amount': sheet_totals[sheet_name].total_value, \
-'currency': current.currency}) }}</div>
-                        {% if previous and sheet_totals[sheet_name].total_change %}
-                        {% set sheet_change_text, sheet_change_color = format_change(
-                            {'amount': sheet_totals[sheet_name].total_change, \
-'currency': current.currency},
-                            sheet_totals[sheet_name].change_percent) %}
-                        <div style="color: {{ sheet_change_color }}; font-size: 13px;">
-                            {{ sheet_change_text }}
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Sheet content (collapsible in export mode) -->
-                <div id="sheet-{{ sheet_id }}" class="collapsible-content">
-                    <!-- Section-level grouping within sheet (only if multiple sections) -->
-                    {% if sheet_sections|length > 1 %}
-                        {% for section_name, accounts in sheet_sections.items() %}
-                        {% set section_id = sheet_id ~ '_' ~ loop.index %}
-                        {% set section = section_totals[sheet_name][section_name] %}
-                        <div style="margin-left: 15px; margin-top: 15px;">
-                            <div {% if is_export %}\
-class="collapsible-header collapsed subsection-header-row" \
-onclick="toggleSection('{{ section_id }}')"{% else %}class="subsection-header-row"{% endif %} \
-style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 4px; \
-padding-bottom: 3px; border-bottom: 1px solid #f0f0f0; display: table; width: 100%;">
-                                <div class="subsection-header-title" style="display: table-cell; \
-vertical-align: middle;">
-                                    {% if is_export %}<span class="toggle-indicator">▼</span>\
-{% endif %}
-                                    {{ section_name }}
-                                    <span style="font-size: 13px; color: #888; font-weight: 500;">
-                                        ({{ section.count }} account\
-{{ 's' if section.count != 1 else '' }})
-                                    </span>
-                                </div>
-                                <div class="subsection-header-total" style="display: table-cell; \
-vertical-align: middle; text-align: right; font-size: 13px; white-space: nowrap;">
-                                    <div>{{ format_money({'amount': section.total_value, \
-'currency': current.currency}) }}</div>
-                                    {% if previous and section.total_change %}
-                                    {% set section_change_text, section_change_color = \
-format_change(
-                                        {'amount': section.total_change, \
-'currency': current.currency},
-                                        section.change_percent) %}
-                                    <div style="color: {{ section_change_color }}; \
-font-size: 12px;">
-                                        {{ section_change_text }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <!-- Section content (collapsible in export mode) -->
-                            <div id="section-{{ section_id }}" class="collapsible-content">
-                                <!-- Individual accounts within section -->
-                                {% for account in accounts %}
-                                <div class="account-row" style="display: table; width: 100%; \
-padding: 12px 0 12px 15px; border-bottom: 1px solid #f8f8f8;">
-                                    <div class="account-name" style="display: table-cell; \
-vertical-align: middle;">
-                                        <div style="font-weight: 500; color: #333; \
-font-size: 13px;">{{ account.name }}</div>
-                                        {% if account.institution %}
-                                        <div style="font-size: 11px; color: #999;">\
-{{ account.institution }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="account-value" style="display: table-cell; \
-vertical-align: middle; text-align: right; white-space: nowrap;">
-                                        <div style="font-weight: 600; color: #333; \
-font-size: 13px;">{{ format_money(account.current_value) }}</div>
-                                        {% if previous %}
-                                        {% set change_text, change_color = format_change(
-                                            account.change, account.change_percent) %}
-                                        <div style="font-size: 12px; font-weight: 600; \
-color: {{ change_color }};">{{ change_text }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <!-- Single section: skip section header, show accounts directly -->
-                        {% for section_name, accounts in sheet_sections.items() %}
-                            {% for account in accounts %}
-                            <div class="account-row" style="display: table; width: 100%; \
-padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                                <div class="account-name" style="display: table-cell; \
-vertical-align: middle;">
-                                    <div style="font-weight: 500; color: #333;">\
-{{ account.name }}</div>
-                                    {% if account.institution %}
-                                    <div style="font-size: 12px; color: #999;">\
-{{ account.institution }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="account-value" style="display: table-cell; \
-vertical-align: middle; text-align: right; white-space: nowrap;">
-                                    <div style="font-weight: 600; color: #333;">\
-{{ format_money(account.current_value) }}</div>
-                                    {% if previous %}
-                                    {% set change_text, change_color = format_change(
-                                        account.change, account.change_percent) %}
-                                    <div style="font-size: 14px; font-weight: 600; \
-color: {{ change_color }};">{{ change_text }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% endfor %}
-                        {% endfor %}
-                    {% endif %}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        {% if debt_movers %}
-        <div style="margin-bottom: 30px;">
-            <div class="section-header-row" style="font-size: 18px; font-weight: 600; color: #333; \
-margin-bottom: 8px; border-bottom: 2px solid #e0e0e0; padding-bottom: 5px; display: table; \
-width: 100%;">
-                <div class="section-header-title" \
-style="display: table-cell; vertical-align: middle;">
-                    Liabilities
-                </div>
-                <div class="section-header-total" \
-style="display: table-cell; vertical-align: middle; text-align: right; \
-font-size: 16px; font-weight: 600; white-space: nowrap;">
-                    <div>Total: {{ format_money(current.total_debts) }}</div>
-                    {% if previous and total_debt_change %}
-                    {% set change_text, change_color = format_change(
-                        {'amount': total_debt_change, 'currency': current.currency},
-                        total_debt_change_percent) %}
-                    <div style="color: {{ change_color }};">{{ change_text }}</div>
-                    {% endif %}
-                </div>
-            </div>
-            {% for account in debt_movers %}
-            <div class="account-row" style="display: table; width: 100%; \
-padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                <div class="account-name" style="display: table-cell; vertical-align: middle;">
-                    <div style="font-weight: 500; color: #333;">{{ account.name }}</div>
-                    {% if account.institution %}
-                    <div style="font-size: 12px; color: #999;">{{ account.institution }}</div>
-                    {% endif %}
-                </div>
-                <div class="account-value" style="display: table-cell; vertical-align: middle; \
-text-align: right; white-space: nowrap;">
-                    <div style="font-weight: 600; color: #333;">\
-{{ format_money(account.current_value) }}</div>
-                    {% if previous %}
-                    {% set change_text, change_color = format_change(
-                        account.change, account.change_percent) %}
-                    <div style="font-size: 14px; font-weight: 600; color: {{ change_color }};">\
-{{ change_text }}</div>
-                    {% endif %}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        {% if allocation %}
-        <div style="margin-bottom: 30px;">
-            <div style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 8px; \
-border-bottom: 2px solid #e0e0e0; padding-bottom: 5px;">Asset Allocation</div>
-            <div style="text-align: center;">
-                <img src="{{ chart_src }}" alt="Asset Allocation Chart" \
-style="max-width: 100%; height: auto;" />
-            </div>
-        </div>
-        {% endif %}
-
-        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e0e0e0; \
-color: #999; font-size: 12px; text-align: center;">
-            Report generated on {{ report_date }}<br>
-            <a href="https://github.com/the-mace/kubera-reporting" \
-style="color: #0066cc; text-decoration: none;">kubera-reporting on GitHub</a>
-        </div>
-    </div>
-
-    {% if is_export %}
-    <script>
-        function toggleSheet(sheetId) {
-            const header = event.currentTarget;
-            const content = document.getElementById('sheet-' + sheetId);
-
-            if (content.classList.contains('expanded')) {
-                content.classList.remove('expanded');
-                header.classList.add('collapsed');
-            } else {
-                content.classList.add('expanded');
-                header.classList.remove('collapsed');
-            }
-        }
-
-        function toggleSection(sectionId) {
-            const header = event.currentTarget;
-            const content = document.getElementById('section-' + sectionId);
-
-            if (content.classList.contains('expanded')) {
-                content.classList.remove('expanded');
-                header.classList.add('collapsed');
-            } else {
-                content.classList.add('expanded');
-                header.classList.remove('collapsed');
-            }
-        }
-    </script>
-    {% endif %}
-</body>
-</html>"""

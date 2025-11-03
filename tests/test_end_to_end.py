@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from kubera_reporting.allocation import calculate_asset_allocation
 from kubera_reporting.reporter import PortfolioReporter
 from kubera_reporting.storage import SnapshotStorage
 from kubera_reporting.types import PortfolioSnapshot
@@ -97,7 +98,7 @@ def test_second_day_report_with_deltas(snapshot_2025_01_15, snapshot_2025_01_16)
     assert mortgage["change"]["amount"] == pytest.approx(-50.0)  # Negative = paid down
 
     # Test asset allocation
-    allocation = reporter.calculate_asset_allocation(snapshot_2025_01_16)
+    allocation = calculate_asset_allocation(snapshot_2025_01_16)
     assert "Stocks" in allocation
     assert "Bonds" in allocation
     assert "Crypto" in allocation

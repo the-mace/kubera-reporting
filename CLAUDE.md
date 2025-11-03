@@ -150,9 +150,27 @@ This means you'll have complete historical data for weekly/monthly/quarterly/yea
    - `_aggregate_holdings_to_accounts()`: Filters out individual stock holdings (IDs like `{uuid}_isin-xxx`) to show only parent accounts
    - `calculate_deltas()`: Compares current vs previous snapshots
    - `generate_html_report(report_data, report_type=ReportType.DAILY, ...)`: Creates formatted HTML emails with balance changes, now accepts report type
-   - `calculate_asset_allocation()`: Groups assets by sheet_name for pie chart
-   - `generate_allocation_chart()`: Creates matplotlib pie chart (can embed as base64 or return bytes)
    - `generate_ai_summary(report_data, report_type=ReportType.DAILY)`: Calls LLM for portfolio insights, context-aware of report period
+
+3a. **allocation.py** - Asset allocation calculation
+   - `calculate_asset_allocation()`: Groups assets by subType/assetClass for pie chart categorization
+
+3b. **chart_generator.py** - Chart generation
+   - `generate_allocation_chart()`: Creates matplotlib pie chart (returns PNG bytes)
+
+3c. **html_formatter.py** - HTML formatting utilities
+   - `format_money()`: Currency-aware money formatting
+   - `format_net_worth()`: Net worth with FIRE category indicator
+   - `format_change()`: Change value with color and percentage
+   - `get_fire_category()`: Determines FIRE category based on net worth
+
+3d. **prompts.py** - AI prompt templates
+   - `AI_SUMMARY_PROMPT_WITH_AMOUNTS`: Prompt template for full dollar amounts
+   - `AI_SUMMARY_PROMPT_NO_AMOUNTS`: Prompt template for percentages only
+
+3e. **templates/report_template.html** - Jinja2 HTML email template
+   - Responsive HTML template with inline styles for email compatibility
+   - Supports collapsible sections for export mode
 
 4. **emailer.py** - Email delivery via local mail command
    - `EmailSender`: Sends MIME multipart HTML emails

@@ -55,6 +55,12 @@ Issues = "https://github.com/the-mace/kubera-reporting/issues"
 [tool.hatch.build.targets.wheel]
 packages = ["kubera_reporting"]
 
+[tool.hatch.build]
+include = [
+    "kubera_reporting/**/*.py",
+    "kubera_reporting/templates/**/*.html",
+]
+
 [tool.hatch.metadata]
 allow-direct-references = true
 
