@@ -63,7 +63,7 @@ GROK_API_KEY=your_grok_api_key
 # OPENAI_API_KEY=your_openai_key
 
 # Optional: Override default AI model
-KUBERA_REPORT_LLM_MODEL=xai/grok-4-fast-reasoning
+KUBERA_REPORT_LLM_MODEL=xai/grok-4-1-fast-reasoning
 ```
 
 **Finding Your Portfolio Index:**

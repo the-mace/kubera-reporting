@@ -9,7 +9,7 @@ from kubera_reporting.exceptions import AIError
 from kubera_reporting.types import PortfolioSnapshot, ReportData
 
 # Default models
-DEFAULT_MODEL = "xai/grok-4-fast-reasoning"  # Best performance/cost balance
+DEFAULT_MODEL = "xai/grok-4-1-fast-reasoning"  # Grok 4.1 Fast with reasoning
 ENV_FILE_PATH = "~/.env"
 
 
@@ -60,9 +60,10 @@ class LLMClient:
 
         # Convert legacy model names to current format
         model_mapping = {
-            "grok-4-fast-reasoning": "xai/grok-4-fast-reasoning",
-            "grok-beta": "xai/grok-4-fast-reasoning",
-            "grok-2-1212": "xai/grok-4-fast-reasoning",
+            "grok-4-1-fast-reasoning": "xai/grok-4-1-fast-reasoning",
+            "grok-4-fast-reasoning": "xai/grok-4-1-fast-reasoning",  # Auto-upgrade to 4.1
+            "grok-beta": "xai/grok-4-1-fast-reasoning",
+            "grok-2-1212": "xai/grok-4-1-fast-reasoning",
         }
         self.model: str = model_mapping.get(selected_model, selected_model)
 

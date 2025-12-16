@@ -395,7 +395,8 @@ def show(portfolio_id: str | None, data_dir: str | None, date: str | None) -> No
 )
 @click.option("--data-dir", help="Data directory (default: ~/.kubera-reporting/data)")
 @click.option(
-    "--model", help="LLM model to use (default: from KUBERA_REPORT_LLM_MODEL env or grok-4-fast)"
+    "--model",
+    help="LLM model to use (default: from KUBERA_REPORT_LLM_MODEL env or grok-4-1-fast-reasoning)",
 )
 def query(question: str, portfolio_id: str | None, data_dir: str | None, model: str | None) -> None:
     """Ask AI questions about your portfolio."""

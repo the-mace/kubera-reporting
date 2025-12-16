@@ -373,7 +373,7 @@ ANTHROPIC_API_KEY=your_anthropic_key # Claude
 OPENAI_API_KEY=your_openai_key      # GPT
 
 # Optional: Override default model
-KUBERA_REPORT_LLM_MODEL=xai/grok-4-fast-reasoning
+KUBERA_REPORT_LLM_MODEL=xai/grok-4-1-fast-reasoning
 
 # Optional: Minimum dollar amount for "also notable" AI insights (default: 250)
 KUBERA_AI_NOTABLE_THRESHOLD=250
