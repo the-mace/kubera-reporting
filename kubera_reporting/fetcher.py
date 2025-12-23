@@ -1,6 +1,7 @@
 """Fetch portfolio data from Kubera API."""
 
 import sys
+import time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -14,6 +15,9 @@ from kubera_reporting.types import AccountSnapshot, PortfolioSnapshot
 
 class KuberaFetcher:
     """Fetches portfolio data from Kubera API."""
+
+    MAX_RETRIES = 3
+    INITIAL_BACKOFF = 1  # seconds
 
     def __init__(self, api_key: str | None = None, secret: str | None = None) -> None:
         """Initialize the fetcher.
@@ -30,6 +34,20 @@ class KuberaFetcher:
         except Exception as e:
             raise DataFetchError(f"Failed to initialize Kubera client: {e}") from e
 
+    def _is_timeout_error(self, error: Exception) -> bool:
+        """Check if an error is a timeout error.
+
+        Args:
+            error: The exception to check
+
+        Returns:
+            True if the error is timeout-related
+        """
+        error_msg = str(error).lower()
+        return any(
+            keyword in error_msg for keyword in ["timeout", "timed out", "read operation timed out"]
+        )
+
     def fetch_snapshot(self, portfolio_id: str | None = None) -> PortfolioSnapshot:
         """Fetch current portfolio snapshot.
 
@@ -40,113 +58,159 @@ class KuberaFetcher:
             Current portfolio snapshot
 
         Raises:
-            DataFetchError: If fetching fails
+            DataFetchError: If fetching fails after all retries
         """
-        try:
-            # Get portfolios and update cache
-            portfolios = self.client.get_portfolios()
-            if not portfolios:
-                raise DataFetchError("No portfolios found")
+        last_error: Exception | None = None
 
-            # Save to cache for index resolution
-            save_portfolio_cache(portfolios)  # type: ignore[arg-type]
+        for attempt in range(self.MAX_RETRIES):
+            try:
+                # Get portfolios and update cache (with retry)
+                portfolios = self.client.get_portfolios()
+                if not portfolios:
+                    raise DataFetchError("No portfolios found")
 
-            # Resolve portfolio ID (handles both indexes like "4" and GUIDs)
-            if portfolio_id is not None:
-                resolved_id = resolve_portfolio_id(portfolio_id)
-                if resolved_id is None:
-                    raise DataFetchError(
-                        f"Portfolio '{portfolio_id}' not found. "
-                        "Run 'kubera list' to see available portfolios."
+                # Save to cache for index resolution
+                save_portfolio_cache(portfolios)  # type: ignore[arg-type]
+
+                # Resolve portfolio ID (handles both indexes like "4" and GUIDs)
+                if portfolio_id is not None:
+                    resolved_id = resolve_portfolio_id(portfolio_id)
+                    if resolved_id is None:
+                        raise DataFetchError(
+                            f"Portfolio '{portfolio_id}' not found. "
+                            "Run 'kubera list' to see available portfolios."
+                        )
+                    portfolio_id = resolved_id
+                else:
+                    # Use first portfolio if not specified
+                    portfolio_id = portfolios[0]["id"]
+                    print(
+                        f"Using first portfolio: {portfolios[0]['name']} ({portfolio_id})",
+                        file=sys.stderr,
                     )
-                portfolio_id = resolved_id
-            else:
-                # Use first portfolio if not specified
-                portfolio_id = portfolios[0]["id"]
-                print(
-                    f"Using first portfolio: {portfolios[0]['name']} ({portfolio_id})",
-                    file=sys.stderr,
-                )
 
-            # Get detailed portfolio data
-            portfolio: dict[str, Any] = self.client.get_portfolio(portfolio_id)  # type: ignore[assignment]
+                # Get detailed portfolio data (with retry)
+                portfolio: dict[str, Any] = self.client.get_portfolio(portfolio_id)  # type: ignore[assignment]
 
-            # Extract ALL accounts from assets and debts (raw data)
-            # The reporter will handle aggregation/filtering as needed
-            accounts: list[AccountSnapshot] = []
+                # Extract ALL accounts from assets and debts (raw data)
+                # The reporter will handle aggregation/filtering as needed
+                accounts: list[AccountSnapshot] = []
 
-            # Process assets - save ALL raw data from API
-            for asset in portfolio.get("assets", portfolio.get("asset", [])):
-                accounts.append(
-                    {
-                        "id": asset["id"],
-                        "name": asset["name"],
-                        "institution": asset.get("connection", {}).get("providerName"),
-                        "value": asset["value"],
-                        "category": "asset",
-                        "sheet_name": asset["sheetName"],
-                        "section_name": asset.get("sectionName"),
-                        "sub_type": asset.get("subType"),
-                        "asset_class": asset.get("assetClass"),
-                        "account_type": asset.get("type"),
-                        "geography": asset.get("geography"),
-                    }
-                )
+                # Process assets - save ALL raw data from API
+                for asset in portfolio.get("assets", portfolio.get("asset", [])):
+                    accounts.append(
+                        {
+                            "id": asset["id"],
+                            "name": asset["name"],
+                            "institution": asset.get("connection", {}).get("providerName"),
+                            "value": asset["value"],
+                            "category": "asset",
+                            "sheet_name": asset["sheetName"],
+                            "section_name": asset.get("sectionName"),
+                            "sub_type": asset.get("subType"),
+                            "asset_class": asset.get("assetClass"),
+                            "account_type": asset.get("type"),
+                            "geography": asset.get("geography"),
+                        }
+                    )
 
-            # Process debts - save ALL raw data from API
-            for debt in portfolio.get("debts", portfolio.get("debt", [])):
-                accounts.append(
-                    {
-                        "id": debt["id"],
-                        "name": debt["name"],
-                        "institution": debt.get("connection", {}).get("providerName"),
-                        "value": debt["value"],
-                        "category": "debt",
-                        "sheet_name": debt["sheetName"],
-                        "section_name": debt.get("sectionName"),
-                        "sub_type": debt.get("subType"),
-                        "asset_class": debt.get("assetClass"),
-                        "account_type": debt.get("type"),
-                        "geography": debt.get("geography"),
-                    }
-                )
+                # Process debts - save ALL raw data from API
+                for debt in portfolio.get("debts", portfolio.get("debt", [])):
+                    accounts.append(
+                        {
+                            "id": debt["id"],
+                            "name": debt["name"],
+                            "institution": debt.get("connection", {}).get("providerName"),
+                            "value": debt["value"],
+                            "category": "debt",
+                            "sheet_name": debt["sheetName"],
+                            "section_name": debt.get("sectionName"),
+                            "sub_type": debt.get("subType"),
+                            "asset_class": debt.get("assetClass"),
+                            "account_type": debt.get("type"),
+                            "geography": debt.get("geography"),
+                        }
+                    )
 
-            # Get portfolio info for name and currency
-            portfolio_info = next((p for p in portfolios if p["id"] == portfolio_id), None)
+                # Get portfolio info for name and currency
+                portfolio_info = next((p for p in portfolios if p["id"] == portfolio_id), None)
 
-            if not portfolio_info:
-                raise DataFetchError(f"Portfolio {portfolio_id} not found in portfolio list")
+                if not portfolio_info:
+                    raise DataFetchError(f"Portfolio {portfolio_id} not found in portfolio list")
 
-            # Get currency from portfolio info
-            currency = portfolio_info.get("currency", "USD")
+                # Get currency from portfolio info
+                currency = portfolio_info.get("currency", "USD")
 
-            # Create snapshot (API returns numeric values, not objects)
-            snapshot: PortfolioSnapshot = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "portfolio_id": portfolio_id,
-                "portfolio_name": portfolio_info.get("name", "Unknown Portfolio"),
-                "currency": currency,
-                "net_worth": {
-                    "amount": portfolio.get("net_worth", portfolio.get("netWorth", 0.0)),
+                # Create snapshot (API returns numeric values, not objects)
+                snapshot: PortfolioSnapshot = {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "portfolio_id": portfolio_id,
+                    "portfolio_name": portfolio_info.get("name", "Unknown Portfolio"),
                     "currency": currency,
-                },
-                "total_assets": {
-                    "amount": portfolio.get("asset_total", portfolio.get("assetTotal", 0.0)),
-                    "currency": currency,
-                },
-                "total_debts": {
-                    "amount": portfolio.get("debt_total", portfolio.get("debtTotal", 0.0)),
-                    "currency": currency,
-                },
-                "accounts": accounts,
-            }
+                    "net_worth": {
+                        "amount": portfolio.get("net_worth", portfolio.get("netWorth", 0.0)),
+                        "currency": currency,
+                    },
+                    "total_assets": {
+                        "amount": portfolio.get("asset_total", portfolio.get("assetTotal", 0.0)),
+                        "currency": currency,
+                    },
+                    "total_debts": {
+                        "amount": portfolio.get("debt_total", portfolio.get("debtTotal", 0.0)),
+                        "currency": currency,
+                    },
+                    "accounts": accounts,
+                }
 
-            return snapshot
+                return snapshot
 
-        except KuberaAPIError as e:
-            raise DataFetchError(f"Kubera API error: {e.message}") from e
-        except Exception as e:
-            raise DataFetchError(f"Failed to fetch portfolio data: {e}") from e
+            except KuberaAPIError as e:
+                last_error = e
+                if not self._is_timeout_error(e):
+                    # Non-timeout API errors should not be retried
+                    raise DataFetchError(f"Kubera API error: {e.message}") from e
+
+                if attempt < self.MAX_RETRIES - 1:
+                    backoff = self.INITIAL_BACKOFF * (2**attempt)
+                    print(
+                        f"Timeout error on attempt {attempt + 1}/{self.MAX_RETRIES}. "
+                        f"Retrying in {backoff}s...",
+                        file=sys.stderr,
+                    )
+                    time.sleep(backoff)
+                else:
+                    raise DataFetchError(
+                        f"Failed to fetch portfolio data after {self.MAX_RETRIES} attempts: "
+                        f"{e.message}"
+                    ) from e
+
+            except DataFetchError:
+                # Re-raise DataFetchError without retry (these are logic errors)
+                raise
+
+            except Exception as e:
+                last_error = e
+                if not self._is_timeout_error(e):
+                    # Non-timeout errors should not be retried
+                    raise DataFetchError(f"Failed to fetch portfolio data: {e}") from e
+
+                if attempt < self.MAX_RETRIES - 1:
+                    backoff = self.INITIAL_BACKOFF * (2**attempt)
+                    print(
+                        f"Timeout error on attempt {attempt + 1}/{self.MAX_RETRIES}. "
+                        f"Retrying in {backoff}s...",
+                        file=sys.stderr,
+                    )
+                    time.sleep(backoff)
+                else:
+                    raise DataFetchError(
+                        f"Failed to fetch portfolio data after {self.MAX_RETRIES} attempts: {e}"
+                    ) from e
+
+        # This should never be reached, but just in case
+        if last_error:
+            raise DataFetchError(f"Failed to fetch portfolio data: {last_error}") from last_error
+        raise DataFetchError("Failed to fetch portfolio data: Unknown error")
 
     def close(self) -> None:
         """Close the Kubera client."""
