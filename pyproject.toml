@@ -25,7 +25,7 @@ classifiers = [
 ]
 dependencies = [
     "kubera-api @ git+https://github.com/the-mace/kubera-python-api.git",
-    "click>=8.1.0",
+    "click>=8.3.2",
     "rich>=15.0.0",
     "python-dotenv>=1.2.2",
     "litellm>=1.83.7",
