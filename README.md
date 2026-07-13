@@ -4,6 +4,14 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+> **⚠️ Archived — no longer maintained.**
+>
+> This project was built to work around the lack of official AI tooling for Kubera: it polled the API, stored snapshots locally, and used an LLM to generate scheduled email reports and answer ad-hoc questions.
+>
+> Kubera now offers an official **MCP server**, and Claude (and other MCP-compatible assistants) can connect to it directly and be scheduled to send messages or reports on your behalf. That covers what this project did, natively and with better support, so this repo is archived rather than maintained going forward.
+>
+> If you're looking for AI-powered Kubera reporting today, start with Kubera's own MCP integration instead of this project. The code here remains available as a reference (data modeling, delta calculations, HTML email templates, multi-period retention logic), but it will not receive further updates or bug fixes. Feel free to fork it if you want to keep it going.
+
 Daily, weekly, monthly, quarterly, and yearly portfolio reporting with AI-powered analysis for Kubera data.
 
 ## Features
